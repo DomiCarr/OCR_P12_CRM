@@ -1,4 +1,4 @@
-Generated 2026-02-16 17:55:15
+Generated 2026-02-16 21:29:27
 
 Listing all files and folders (excluding env/, __pycache__, .git/, and _dev_utils/):
 
@@ -10,8 +10,21 @@ app
     app/.DS_Store
     app/controllers
     app/models
+        app/models/.DS_Store
+        app/models/__init__.py
+        app/models/base.py
+        app/models/client.py
+        app/models/contract.py
+        app/models/department.py
+        app/models/employee.py
+        app/models/event.py
+    app/repositories
+        app/repositories/base_repository.py
     app/static
+    app/utils
+        app/utils/auth.py
     app/views
 config
     config/config.py
+init_db.py
 requirements.txt

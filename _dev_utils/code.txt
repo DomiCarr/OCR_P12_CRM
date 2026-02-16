@@ -1,4 +1,4 @@
-Generated 2026-02-16 20:48:27
+Generated 2026-02-16 21:29:30
 
 ===============================================================================
     ./README.md
@@ -95,6 +95,7 @@ from app.models.base import (
 if TYPE_CHECKING:
     from app.models.employee import Employee
     from app.models.event import Event
+    from app.models.contract import Contract
 
 
 class Client(Base):
@@ -122,6 +123,9 @@ class Client(Base):
     # Relationships
     sales_contact: Mapped["Employee"] = relationship(
         back_populates="managed_clients"
+    )
+    contracts: Mapped[list["Contract"]] = relationship(
+        back_populates="client"
     )
     events: Mapped[list["Event"]] = relationship(
         back_populates="client"
@@ -320,6 +324,71 @@ class Event(Base):
 
     def __repr__(self) -> str:
         return f"<Event(name={self.name}, date={self.event_date})>"
+
+===============================================================================
+    ./app/repositories/base_repository.py
+===============================================================================
+# app/repositories/base_repository.py
+from typing import Generic, TypeVar, Type, Optional, List
+from sqlalchemy.orm import Session
+from app.models.base import Base
+
+T = TypeVar("T", bound=Base)
+
+
+class BaseRepository(Generic[T]):
+    """
+    Base class for data access logic.
+    """
+
+    def __init__(self, session: Session, model: Type[T]):
+        self.session = session
+        self.model = model
+
+    def get_by_id(self, obj_id: int) -> Optional[T]:
+        """Fetch a single record by its primary key."""
+        return self.session.query(self.model).filter(
+            self.model.id == obj_id
+        ).first()
+
+    def get_all(self) -> List[T]:
+        """Fetch all records for this model."""
+        return self.session.query(self.model).all()
+
+    def add(self, obj: T) -> None:
+        """Add a new object to the session."""
+        self.session.add(obj)
+
+    def delete(self, obj: T) -> None:
+        """Remove an object from the session."""
+        self.session.delete(obj)
+
+===============================================================================
+    ./app/utils/auth.py
+===============================================================================
+# app/utils/auth.py
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
+
+# Initialize the hasher with default secure parameters
+ph = PasswordHasher()
+
+
+def hash_password(password: str) -> str:
+    """
+    Hash a password using Argon2.
+    """
+    return ph.hash(password)
+
+
+def verify_password(hashed_password: str, plain_password: str) -> bool:
+    """
+    Verify a password against its Argon2 hash.
+    """
+    try:
+        return ph.verify(hashed_password, plain_password)
+    except VerifyMismatchError:
+        return False
 
 ===============================================================================
     ./config/config.py

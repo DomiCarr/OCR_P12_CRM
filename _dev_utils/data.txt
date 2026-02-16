@@ -1,0 +1,88 @@
+super user
+
+from apps.users.models import User
+
+u = User.objects.create_superuser(
+    username="super",
+    email="super@example.com",
+    password="P123654$",
+    age=30,
+)
+
+
+api/signup/
+
+{
+  "username": "JVerne",
+  "email": "jules.verne@gmail.com",
+  "first_name": "Jules",
+  "last_name": "Verne",
+  "age": 70,
+  "can_be_contacted": true,
+  "can_data_be_shared": true,
+  "password": "PS123654$",
+  "password2": "PS123654$"
+}
+
+{
+  "username": "Alice",
+  "email": "alice@example.com",
+  "first_name": "Alice",
+  "last_name": "Martin",
+  "age": 30,
+  "can_be_contacted": true,
+  "can_data_be_shared": true,
+  "password": "PS123654$",
+  "password2": "PS123654$"
+}
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY4NDE5NzM3LCJpYXQiOjE3Njg0MTg4MzcsImp0aSI6ImI4Y2FlNjg0Mjg5NjRiOGRhOTFkMWMwZGJlOTY5YzZiIiwidXNlcl9pZCI6IjYifQ.XbmCU8HzW9c_UtHm3evQFOd-r64ZotcGbQILRJrsmFI
+
+{
+  "username": "Bob",
+  "email": "bob@example.com",
+  "first_name": "Bob",
+  "last_name": "Durand",
+  "age": 35,
+  "can_be_contacted": true,
+  "can_data_be_shared": false,
+  "password": "PS123654$",
+  "password2": "PS123654$"
+}
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY4NDE5NzcwLCJpYXQiOjE3Njg0MTg4NzAsImp0aSI6ImYyNTlmN2QzNzhmZDRhMmU5MmExNmZhNzE3YWY0NjE1IiwidXNlcl9pZCI6IjcifQ.Ydj7kPpuI2TxzcfXVli0orrluy-fleucLifx_ULqAH8
+
+{
+  "username": "Charlie",
+  "email": "charlie@example.com",
+  "first_name": "Charlie",
+  "last_name": "Dupont",
+  "age": 28,
+  "can_be_contacted": false,
+  "can_data_be_shared": true,
+  "password": "PS123654$",
+  "password2": "PS123654$"
+}
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY4NDE5NzcwLCJpYXQiOjE3Njg0MTg4NzAsImp0aSI6ImYyNTlmN2QzNzhmZDRhMmU5MmExNmZhNzE3YWY0NjE1IiwidXNlcl9pZCI6IjcifQ.Ydj7kPpuI2TxzcfXVli0orrluy-fleucLifx_ULqAH8
+
+
+api/login/
+
+Saisir access token +
+
+{
+    "username": "JVerne",
+    "password": "PS123654$"
+}
+
+api/me (PUT)
+
+{
+  "username": "JVerne",
+  "email": "jules.verne@gmail.com",
+  "first_name": "Jules Henri",
+  "last_name": "Verne",
+  "age": 70,
+  "can_be_contacted": true,
+  "can_data_be_shared": true,
+  "password": "PS123654$",
+  "password2": "PS123654$"
+}

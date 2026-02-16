@@ -1,0 +1,17 @@
+Generated 2026-02-16 17:55:15
+
+Listing all files and folders (excluding env/, __pycache__, .git/, and _dev_utils/):
+
+.DS_Store
+.env
+.gitignore
+README.md
+app
+    app/.DS_Store
+    app/controllers
+    app/models
+    app/static
+    app/views
+config
+    config/config.py
+requirements.txt

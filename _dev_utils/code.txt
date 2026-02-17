@@ -1,4 +1,4 @@
-Generated 2026-02-16 21:29:30
+Generated 2026-02-17 13:48:26
 
 ===============================================================================
     ./README.md
@@ -10,6 +10,11 @@ Generated 2026-02-16 21:29:30
     ./app/models/__init__.py
 ===============================================================================
 # app/models/__init__.py
+"""
+This module centralizes all SQLAlchemy models to facilitate imports
+and ensure they are registered with the Base metadata for migrations.
+"""
+
 from app.models.base import Base
 from app.models.department import Department
 from app.models.employee import Employee
@@ -78,6 +83,12 @@ class Base(DeclarativeBase):
     ./app/models/client.py
 ===============================================================================
 # app/models/client.py
+"""
+This module defines the Client model, which stores customer information,
+contact details, and handles relationships with sales employees,
+contracts, and events.
+"""
+
 from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -141,6 +152,11 @@ class Client(Base):
     ./app/models/contract.py
 ===============================================================================
 # app/models/contract.py
+"""
+This module defines the Contract model, which stores financial agreements
+with clients, including amounts, payment status, and audit timestamps.
+"""
+
 from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey, Boolean, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -191,6 +207,11 @@ class Contract(Base):
     ./app/models/department.py
 ===============================================================================
 # app/models/department.py
+"""
+This module defines the Department model, which represents the different
+business units within the company and manages their relationship with employees.
+"""
+
 from typing import TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -222,6 +243,12 @@ class Department(Base):
     ./app/models/employee.py
 ===============================================================================
 # app/models/employee.py
+"""
+This module defines the Employee model, which stores staff member information,
+credentials, and their association with departments and managed entities
+such as clients and events.
+"""
+
 from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -271,6 +298,11 @@ class Employee(Base):
     ./app/models/event.py
 ===============================================================================
 # app/models/event.py
+"""
+This module defines the Event model, representing a scheduled event
+linked to a client, a contract, and potentially a support employee.
+"""
+
 from typing import TYPE_CHECKING, Optional
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -329,6 +361,12 @@ class Event(Base):
     ./app/repositories/base_repository.py
 ===============================================================================
 # app/repositories/base_repository.py
+"""
+This module defines the BaseRepository class using Generics.
+It provides a standardized interface for common database operations (CRUD)
+shared across all specific repositories.
+"""
+
 from typing import Generic, TypeVar, Type, Optional, List
 from sqlalchemy.orm import Session
 from app.models.base import Base
@@ -364,9 +402,56 @@ class BaseRepository(Generic[T]):
         self.session.delete(obj)
 
 ===============================================================================
+    ./app/repositories/employee_repository.py
+===============================================================================
+# app/repositories/employee_repository.py
+"""
+This module specializes the BaseRepository for the Employee model.
+It provides specific lookup methods necessary for authentication
+and staff management.
+"""
+
+from typing import Optional
+from sqlalchemy.orm import Session
+from app.models.employee import Employee
+from app.repositories.base_repository import BaseRepository
+
+
+class EmployeeRepository(BaseRepository[Employee]):
+    """
+    Data access layer for Employee-specific operations.
+    """
+
+    def __init__(self, session: Session):
+        super().__init__(session, Employee)
+
+    def get_by_email(self, email: str) -> Optional[Employee]:
+        """
+        Fetch an employee by their unique email address.
+        Used for authentication.
+        """
+        return self.session.query(self.model).filter(
+            self.model.email == email
+        ).first()
+
+    def get_by_employee_number(self, emp_number: str) -> Optional[Employee]:
+        """
+        Fetch an employee by their unique employee number.
+        """
+        return self.session.query(self.model).filter(
+            self.model.employee_number == emp_number
+        ).first()
+
+===============================================================================
     ./app/utils/auth.py
 ===============================================================================
 # app/utils/auth.py
+"""
+This module handles secure password management using the Argon2 hashing
+algorithm. It provides utilities for hashing plain text passwords and
+verifying them against stored hashes.
+"""
+
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
@@ -389,6 +474,44 @@ def verify_password(hashed_password: str, plain_password: str) -> bool:
         return ph.verify(hashed_password, plain_password)
     except VerifyMismatchError:
         return False
+
+===============================================================================
+    ./app/utils/permissions.py
+===============================================================================
+# app/utils/permissions.py
+"""
+This module provides a centralized authorization system using an
+Access Control Matrix (ACM). It maps specific actions to departments
+to determine user permissions across the application.
+"""
+
+from enum import Enum
+
+
+class DepartmentName(Enum):
+    """Enumeration of existing departments."""
+
+    MANAGEMENT = "MANAGEMENT"
+    SALES = "SALES"
+    SUPPORT = "SUPPORT"
+
+
+# The Permission Matrix: (Action, Department)
+# Use a set for O(1) lookups and clear mapping.
+PERMISSION_MATRIX = {
+    ("manage_employees", DepartmentName.MANAGEMENT.value),
+    ("manage_contracts", DepartmentName.MANAGEMENT.value),
+    ("manage_contracts", DepartmentName.SALES.value),
+    ("update_events", DepartmentName.MANAGEMENT.value),
+    ("update_events", DepartmentName.SUPPORT.value),
+}
+
+
+def has_permission(action: str, department_name: str) -> bool:
+    """
+    Check if a specific couple (action, department) exists in the matrix.
+    """
+    return (action, department_name) in PERMISSION_MATRIX
 
 ===============================================================================
     ./config/config.py

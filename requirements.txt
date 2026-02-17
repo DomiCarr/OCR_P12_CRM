@@ -1,4 +1,9 @@
+argon2-cffi==25.1.0
+argon2-cffi-bindings==25.1.0
+cffi==2.0.0
 mysql-connector-python==9.6.0
+pycparser==3.0
+PyJWT==2.11.0
 python-dotenv==1.2.1
 SQLAlchemy==2.0.46
 typing_extensions==4.15.0

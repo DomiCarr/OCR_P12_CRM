@@ -1,4 +1,10 @@
 # app/models/client.py
+"""
+This module defines the Client model, which stores customer information,
+contact details, and handles relationships with sales employees,
+contracts, and events.
+"""
+
 from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship

@@ -1,4 +1,10 @@
 # app/repositories/base_repository.py
+"""
+This module defines the BaseRepository class using Generics.
+It provides a standardized interface for common database operations (CRUD)
+shared across all specific repositories.
+"""
+
 from typing import Generic, TypeVar, Type, Optional, List
 from sqlalchemy.orm import Session
 from app.models.base import Base

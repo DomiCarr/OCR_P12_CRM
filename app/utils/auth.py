@@ -1,4 +1,10 @@
 # app/utils/auth.py
+"""
+This module handles secure password management using the Argon2 hashing
+algorithm. It provides utilities for hashing plain text passwords and
+verifying them against stored hashes.
+"""
+
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 

@@ -1,4 +1,9 @@
 # app/models/event.py
+"""
+This module defines the Event model, representing a scheduled event
+linked to a client, a contract, and potentially a support employee.
+"""
+
 from typing import TYPE_CHECKING, Optional
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship

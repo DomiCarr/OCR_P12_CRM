@@ -1,4 +1,9 @@
 # app/models/contract.py
+"""
+This module defines the Contract model, which stores financial agreements
+with clients, including amounts, payment status, and audit timestamps.
+"""
+
 from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey, Boolean, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship

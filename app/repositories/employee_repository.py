@@ -1,4 +1,10 @@
 # app/repositories/employee_repository.py
+"""
+This module specializes the BaseRepository for the Employee model.
+It provides specific lookup methods necessary for authentication
+and staff management.
+"""
+
 from typing import Optional
 from sqlalchemy.orm import Session
 from app.models.employee import Employee

@@ -1,4 +1,10 @@
 # app/models/employee.py
+"""
+This module defines the Employee model, which stores staff member information,
+credentials, and their association with departments and managed entities
+such as clients and events.
+"""
+
 from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship

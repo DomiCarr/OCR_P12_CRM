@@ -1,4 +1,9 @@
 # app/models/department.py
+"""
+This module defines the Department model, which represents the different
+business units within the company and manages their relationship with employees.
+"""
+
 from typing import TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

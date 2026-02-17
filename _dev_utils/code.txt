@@ -1,10 +1,84 @@
-Generated 2026-02-17 13:48:26
+Generated 2026-02-17 14:06:59
 
 ===============================================================================
     ./README.md
 ===============================================================================
 # OCR_P12_CRM
 
+
+===============================================================================
+    ./app/controllers/auth_controller.py
+===============================================================================
+# app/controllers/auth_controller.py
+"""
+This module handles the authentication logic, integrating JWT generation
+and local storage to provide persistent user sessions.
+"""
+
+from typing import Optional
+from app.repositories.employee_repository import EmployeeRepository
+from app.utils.auth import verify_password
+from app.utils.permissions import has_permission
+from app.utils.jwt_handler import create_token, decode_token
+from app.utils.token_storage import save_token, get_token, delete_token
+
+
+class AuthController:
+    """
+    Controller managing login, logout, and persistent session validation.
+    """
+
+    def __init__(self, employee_repository: EmployeeRepository):
+        self.repository = employee_repository
+        self.current_user_data: Optional[dict] = None
+
+    def login(self, email: str, password: str) -> bool:
+        """
+        Authenticate user and save a JWT locally if successful.
+        """
+        employee = self.repository.get_by_email(email)
+
+        if employee and verify_password(employee.password, password):
+            # Generate and save token locally
+            token = create_token(employee.id, employee.department.name)
+            save_token(token)
+            return True
+
+        return False
+
+    def logout(self) -> None:
+        """
+        Clear the session by deleting the local token.
+        """
+        delete_token()
+        self.current_user_data = None
+
+    def get_logged_in_user(self) -> Optional[dict]:
+        """
+        Validate the local token and return user data if still valid.
+        """
+        token = get_token()
+        if not token:
+            return None
+
+        payload = decode_token(token)
+        if payload:
+            self.current_user_data = payload
+            return payload
+
+        # Token expired or invalid
+        delete_token()
+        return None
+
+    def check_user_permission(self, action: str) -> bool:
+        """
+        Check permission based on the department stored in the JWT.
+        """
+        user = self.get_logged_in_user()
+        if not user:
+            return False
+
+        return has_permission(action, user["department"])
 
 ===============================================================================
     ./app/models/__init__.py
@@ -476,6 +550,92 @@ def verify_password(hashed_password: str, plain_password: str) -> bool:
         return False
 
 ===============================================================================
+    ./app/utils/decorators.py
+===============================================================================
+# app/utils/decorators.py
+"""
+This module provides decorators to enforce authentication and authorization
+checks on controller methods or CLI commands.
+"""
+
+from functools import wraps
+from typing import Callable, Any
+from app.utils.token_storage import get_token
+from app.utils.jwt_handler import decode_token
+
+
+def require_auth(func: Callable) -> Callable:
+    """
+    Decorator to ensure a user is authenticated before executing a command.
+    It reads and validates the local JWT token.
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs) -> Any:
+        token = get_token()
+        if not token:
+            print("[Error] You must be logged in to perform this action.")
+            return None
+
+        user_data = decode_token(token)
+        if not user_data:
+            print("[Error] Session expired or invalid. Please login again.")
+            return None
+
+        # Pass user data as an argument to the decorated function
+        return func(user_data=user_data, *args, **kwargs)
+
+    return wrapper
+
+===============================================================================
+    ./app/utils/jwt_handler.py
+===============================================================================
+# app/utils/jwt_handler.py
+"""
+This module handles JSON Web Token (JWT) generation and validation.
+It ensures that user sessions are persistent, secure, and include
+expiration logic as required by the technical specifications.
+"""
+
+import os
+import datetime
+from typing import Optional
+import jwt
+
+
+# Configuration from environment variables
+SECRET_KEY = os.getenv("JWT_SECRET", "default-secret-key-to-change")
+ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+TOKEN_EXPIRATION_HOURS = 12
+
+
+def create_token(employee_id: int, department_name: str) -> str:
+    """
+    Generate a JWT token containing employee ID and department.
+    The token is set to expire in 12 hours.
+    """
+    payload = {
+        "sub": employee_id,
+        "department": department_name,
+        "iat": datetime.datetime.utcnow(),
+        "exp": (
+            datetime.datetime.utcnow() +
+            datetime.timedelta(hours=TOKEN_EXPIRATION_HOURS)
+        )
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def decode_token(token: str) -> Optional[dict]:
+    """
+    Decode and validate a JWT token.
+    Returns the payload if valid, or None if expired/invalid.
+    """
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return None
+
+===============================================================================
     ./app/utils/permissions.py
 ===============================================================================
 # app/utils/permissions.py
@@ -512,6 +672,46 @@ def has_permission(action: str, department_name: str) -> bool:
     Check if a specific couple (action, department) exists in the matrix.
     """
     return (action, department_name) in PERMISSION_MATRIX
+
+===============================================================================
+    ./app/utils/token_storage.py
+===============================================================================
+# app/utils/token_storage.py
+"""
+This module manages the local persistence of the JWT token.
+It provides functions to save, retrieve, and delete the token from
+a local file to maintain user sessions across CLI executions.
+"""
+
+import os
+
+TOKEN_FILE = ".token"
+
+
+def save_token(token: str) -> None:
+    """
+    Save the JWT token to a local hidden file.
+    """
+    with open(TOKEN_FILE, "w", encoding="utf-8") as f:
+        f.write(token)
+
+
+def get_token() -> Optional[str]:
+    """
+    Retrieve the JWT token from the local file if it exists.
+    """
+    if os.path.exists(TOKEN_FILE):
+        with open(TOKEN_FILE, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    return None
+
+
+def delete_token() -> None:
+    """
+    Remove the local token file to log out the user.
+    """
+    if os.path.exists(TOKEN_FILE):
+        os.remove(TOKEN_FILE)
 
 ===============================================================================
     ./config/config.py

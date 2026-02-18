@@ -84,9 +84,11 @@ var/
 # ---------------------------------------------------------
 # Local session tokens (JWT)
 .session.json
+.token
+
+# Database dumps and local SQL scripts
+database/*.sql
+*.sql
 
 # Database migration / temporary SQL (if any)
 *.sql.tmp
-
-# Project data
-# Note: DO NOT ignore requirements.txt or config.py

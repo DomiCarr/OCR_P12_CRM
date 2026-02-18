@@ -20,6 +20,16 @@ class ClientController:
         """
         Fetch all clients if the user has the 'read' permission.
         """
-        if self.auth_controller.check_user_permission("read_client"):
+        # DEBUG: On vérifie ce que contient user_data
+        print(f"[DEBUG] user_data content: {user_data}")
+
+        # On force la mise à jour de la session interne du controller si nécessaire
+        self.auth_controller.current_user_data = user_data
+
+        permission = "read_client"
+        if self.auth_controller.check_user_permission(permission):
             return self.repository.get_all_clients()
-        return None
+
+        # Si ça échoue encore, on affiche pourquoi
+        print(f"[DEBUG] Access denied: Role {user_data.get('department')} lacks {permission}")
+        return []

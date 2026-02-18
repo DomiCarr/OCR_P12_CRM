@@ -1,4 +1,4 @@
-Generated 2026-02-17 14:06:59
+Generated 2026-02-18 14:29:17
 
 ===============================================================================
     ./README.md
@@ -32,7 +32,7 @@ class AuthController:
         self.repository = employee_repository
         self.current_user_data: Optional[dict] = None
 
-    def login(self, email: str, password: str) -> bool:
+    def login(self, email: str, password: str) -> Optional[dict]:
         """
         Authenticate user and save a JWT locally if successful.
         """
@@ -42,9 +42,17 @@ class AuthController:
             # Generate and save token locally
             token = create_token(employee.id, employee.department.name)
             save_token(token)
-            return True
 
-        return False
+            # Return user data for main.py session management
+            user_data = {
+                "id": employee.id,
+                "full_name": employee.full_name,
+                "department": employee.department.name
+            }
+            self.current_user_data = user_data
+            return user_data
+
+        return None
 
     def logout(self) -> None:
         """
@@ -79,6 +87,91 @@ class AuthController:
             return False
 
         return has_permission(action, user["department"])
+
+===============================================================================
+    ./app/controllers/client_controller.py
+===============================================================================
+# app/controllers/client_controller.py
+"""
+Controller handling business logic for Client management.
+Ensures authentication and permission checks before data access.
+"""
+
+from app.repositories.client_repository import ClientRepository
+from app.utils.decorators import require_auth
+
+
+class ClientController:
+    """Manages client-related operations."""
+
+    def __init__(self, repository: ClientRepository, auth_controller):
+        self.repository = repository
+        self.auth_controller = auth_controller
+
+    @require_auth
+    def list_all_clients(self, user_data: dict):
+        """
+        Fetch all clients if the user has the 'read' permission.
+        """
+        if self.auth_controller.check_user_permission("read_client"):
+            return self.repository.get_all_clients()
+        return None
+
+===============================================================================
+    ./app/controllers/contract_controller.py
+===============================================================================
+# app/controllers/contract_controller.py
+"""
+Controller handling business logic for Contract management.
+"""
+
+from app.repositories.contract_repository import ContractRepository
+from app.utils.decorators import require_auth
+
+
+class ContractController:
+    """Manages contract-related operations."""
+
+    def __init__(self, repository: ContractRepository, auth_controller):
+        self.repository = repository
+        self.auth_controller = auth_controller
+
+    @require_auth
+    def list_all_contracts(self, user_data: dict):
+        """
+        Fetch all contracts if allowed.
+        """
+        if self.auth_controller.check_user_permission("read_contract"):
+            return self.repository.get_all_contracts()
+        return None
+
+===============================================================================
+    ./app/controllers/event_controller.py
+===============================================================================
+# app/controllers/event_controller.py
+"""
+Controller handling business logic for Event management.
+"""
+
+from app.repositories.event_repository import EventRepository
+from app.utils.decorators import require_auth
+
+
+class EventController:
+    """Manages event-related operations."""
+
+    def __init__(self, repository: EventRepository, auth_controller):
+        self.repository = repository
+        self.auth_controller = auth_controller
+
+    @require_auth
+    def list_all_events(self, user_data: dict):
+        """
+        Fetch all events if allowed.
+        """
+        if self.auth_controller.check_user_permission("read_event"):
+            return self.repository.get_all_events()
+        return None
 
 ===============================================================================
     ./app/models/__init__.py
@@ -476,6 +569,57 @@ class BaseRepository(Generic[T]):
         self.session.delete(obj)
 
 ===============================================================================
+    ./app/repositories/client_repository.py
+===============================================================================
+# app/repositories/client_repository.py
+"""
+Data access layer for Client-specific operations.
+"""
+
+from sqlalchemy.orm import Session
+from app.models.client import Client
+from app.repositories.base_repository import BaseRepository
+
+
+class ClientRepository(BaseRepository[Client]):
+    """
+    Repository handling Client database queries.
+    """
+
+    def __init__(self, session: Session):
+        super().__init__(session, Client)
+
+    def get_by_email(self, email: str):
+        """
+        Fetch a client by its unique email.
+        """
+        return self.session.query(self.model).filter(
+            self.model.email == email
+        ).first()
+
+===============================================================================
+    ./app/repositories/contract_repository.py
+===============================================================================
+# app/repositories/contract_repository.py
+"""
+Data access layer for Contract-specific operations.
+"""
+
+from sqlalchemy.orm import Session
+from app.models.contract import Contract
+from app.repositories.base_repository import BaseRepository
+
+
+class ContractRepository(BaseRepository[Contract]):
+    """
+    Repository handling Contract database queries.
+    """
+
+    def __init__(self, session: Session):
+        super().__init__(session, Contract)
+
+
+===============================================================================
     ./app/repositories/employee_repository.py
 ===============================================================================
 # app/repositories/employee_repository.py
@@ -517,6 +661,27 @@ class EmployeeRepository(BaseRepository[Employee]):
         ).first()
 
 ===============================================================================
+    ./app/repositories/event_repository.py
+===============================================================================
+# app/repositories/event_repository.py
+"""
+Data access layer for Event-specific operations.
+"""
+
+from sqlalchemy.orm import Session
+from app.models.event import Event
+from app.repositories.base_repository import BaseRepository
+
+
+class EventRepository(BaseRepository[Event]):
+    """
+    Repository handling Event database queries.
+    """
+
+    def __init__(self, session: Session):
+        super().__init__(session, Event)
+
+===============================================================================
     ./app/utils/auth.py
 ===============================================================================
 # app/utils/auth.py
@@ -527,7 +692,7 @@ verifying them against stored hashes.
 """
 
 from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
+from argon2.exceptions import VerifyMismatchError, InvalidHashError
 
 # Initialize the hasher with default secure parameters
 ph = PasswordHasher()
@@ -546,7 +711,7 @@ def verify_password(hashed_password: str, plain_password: str) -> bool:
     """
     try:
         return ph.verify(hashed_password, plain_password)
-    except VerifyMismatchError:
+    except (VerifyMismatchError, InvalidHashError):
         return False
 
 ===============================================================================
@@ -684,6 +849,7 @@ a local file to maintain user sessions across CLI executions.
 """
 
 import os
+from typing import Optional
 
 TOKEN_FILE = ".token"
 
@@ -712,6 +878,202 @@ def delete_token() -> None:
     """
     if os.path.exists(TOKEN_FILE):
         os.remove(TOKEN_FILE)
+
+===============================================================================
+    ./app/views/auth_view.py
+===============================================================================
+# app/views/auth_view.py
+"""
+View for authentication related interactions.
+Handles login inputs and success/failure messages.
+"""
+
+from app.views.base_view import BaseView
+
+
+class AuthView(BaseView):
+    """Handles login inputs."""
+
+    def ask_login_details(self) -> tuple[str, str]:
+        """Prompt user for email and password."""
+        print("\n=== Epic Events CRM - Login ===")
+        email = self.ask_input("Email")
+        password = self.ask_input("Password")
+        return email, password
+
+    def display_login_success(self):
+        """Confirm successful login."""
+        self.display_message("Login successful! Welcome.")
+
+    def display_login_failure(self):
+        """Warn about failed credentials."""
+        self.display_error("Invalid email or password.")
+
+===============================================================================
+    ./app/views/base_view.py
+===============================================================================
+# app/views/base_view.py
+"""
+Base class for all views in the application.
+Provides common display methods for CLI interaction.
+"""
+
+
+class BaseView:
+    """Provides common display methods for CLI interaction."""
+
+    def display_message(self, message: str):
+        """Display a simple text message."""
+        print(f"\n{message}")
+
+    def display_error(self, message: str):
+        """Display an error message formatted for visibility."""
+        print(f"\n[ERROR] {message}")
+
+    def ask_input(self, prompt: str) -> str:
+        """Helper to get user input."""
+        return input(f"{prompt}: ").strip()
+
+===============================================================================
+    ./app/views/client_view.py
+===============================================================================
+# app/views/client_view.py
+"""
+View for Client related interactions.
+"""
+from app.views.base_view import BaseView
+
+
+class ClientView(BaseView):
+    """Handles client display and inputs."""
+
+    def display_clients(self, clients: list):
+        """Print the list of all clients."""
+        print("\n=== Clients List ===")
+        if not clients:
+            print("No clients found.")
+            return
+        for client in clients:
+            print(
+                f"ID: {client.id} | Name: {client.full_name} | "
+                f"Email: {client.email} | Company: {client.company_name}"
+            )
+
+    def ask_client_details(self) -> dict:
+        """Prompt user for new client information."""
+        print("\n=== Add New Client ===")
+        return {
+            "full_name": self.ask_input("Full Name"),
+            "email": self.ask_input("Email"),
+            "phone": self.ask_input("Phone"),
+            "company_name": self.ask_input("Company Name")
+        }
+
+===============================================================================
+    ./app/views/contract_view.py
+===============================================================================
+# app/views/contract_view.py
+"""
+View for Contract related interactions.
+"""
+from app.views.base_view import BaseView
+
+
+class ContractView(BaseView):
+    """Handles contract display and inputs."""
+
+    def display_contracts(self, contracts: list):
+        """Print the list of all contracts."""
+        print("\n=== Contracts List ===")
+        if not contracts:
+            print("No contracts found.")
+            return
+        for contract in contracts:
+            status = "Signed" if contract.is_signed else "Not Signed"
+            print(
+                f"ID: {contract.id} | Client: {contract.client.full_name} | "
+                f"Total Amount: {contract.total_amount} | Status: {status}"
+            )
+
+===============================================================================
+    ./app/views/event_view.py
+===============================================================================
+# app/views/event_view.py
+"""
+View for Event related interactions.
+"""
+from app.views.base_view import BaseView
+
+
+class EventView(BaseView):
+    """Handles event display and inputs."""
+
+    def display_events(self, events: list):
+        """Print the list of all events."""
+        print("\n=== Events List ===")
+        if not events:
+            print("No events found.")
+            return
+        for event in events:
+            support = event.support_contact.full_name if event.support_contact else "TBD"
+            print(
+                f"ID: {event.id} | Name: {event.name} | "
+                f"Date: {event.event_date_start} | Support: {support}"
+            )
+
+===============================================================================
+    ./app/views/main_menu_view.py
+===============================================================================
+# app/views/main_menu_view.py
+"""
+Main menu view for the CRM application.
+Adapts displayed options based on user department.
+"""
+
+from app.views.base_view import BaseView
+
+
+class MainMenuView(BaseView):
+    """Controller view for the main menu."""
+
+    def display_menu(self, department: str):
+        """Print the main menu options according to department."""
+        print(f"\n=== Epic Events CRM - {department} Menu ===")
+        print("1. List all clients")
+        print("2. List all contracts")
+        print("3. List all events")
+
+        if department == "MANAGEMENT":
+            print("10. Manage employees (Admin)")
+        elif department == "SALES":
+            print("20. Create new client")
+        elif department == "SUPPORT":
+            print("30. Update my events")
+
+        print("0. Logout and Exit")
+
+    def ask_menu_option(self) -> str:
+        """Ask the user for a menu option."""
+        return input("\nSelect an option: ").strip()
+
+===============================================================================
+    ./check_auth.py
+===============================================================================
+# check_auth.py
+from app.utils.auth import hash_password, verify_password
+
+password_to_test = "admin123"
+# Le hash exact que vous avez mis dans le SQL
+sql_hash = "$argon2id$v=19$m=65536,t=3,p=4$7Y5Wp8W1S6lF6z1N2q9Q5w$O7N8/v5J8J8"
+
+# 1. Test de vérification
+is_valid = verify_password(password_to_test, sql_hash)
+print(f"Match SQL hash: {is_valid}")
+
+# 2. Test de génération
+new_hash = hash_password(password_to_test)
+print(f"New hash generated: {new_hash}")
+print(f"Match new hash: {verify_password(password_to_test, new_hash)}")
 
 ===============================================================================
     ./config/config.py
@@ -767,4 +1129,97 @@ def create_tables():
 
 if __name__ == "__main__":
     create_tables()
+
+===============================================================================
+    ./main.py
+===============================================================================
+# main.py
+"""
+Entry point for the Epic Events CRM application.
+Manages the main loop and coordinate between controllers and views.
+"""
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from config.config import Config
+
+from app.repositories.employee_repository import EmployeeRepository
+from app.repositories.client_repository import ClientRepository
+from app.repositories.contract_repository import ContractRepository
+from app.repositories.event_repository import EventRepository
+
+from app.controllers.auth_controller import AuthController
+from app.controllers.client_controller import ClientController
+from app.controllers.contract_controller import ContractController
+from app.controllers.event_controller import EventController
+
+from app.views.auth_view import AuthView
+from app.views.main_menu_view import MainMenuView
+from app.views.client_view import ClientView
+from app.views.contract_view import ContractView
+from app.views.event_view import EventView
+
+
+def main():
+    """Main application execution logic."""
+    # Database Setup
+    engine = create_engine(Config.get_db_url())
+    session_factory = sessionmaker(bind=engine)
+    session = session_factory()
+
+    # Initialize Repositories
+    emp_repo = EmployeeRepository(session)
+    client_repo = ClientRepository(session)
+    contract_repo = ContractRepository(session)
+    event_repo = EventRepository(session)
+
+    # Initialize Controllers
+    auth_ctrl = AuthController(emp_repo)
+    client_ctrl = ClientController(client_repo, auth_ctrl)
+    contract_ctrl = ContractController(contract_repo, auth_ctrl)
+    event_ctrl = EventController(event_repo, auth_ctrl)
+
+    # Initialize Views
+    auth_view = AuthView()
+    menu_view = MainMenuView()
+    client_view = ClientView()
+    contract_view = ContractView()
+    event_view = EventView()
+
+    # 1. Authentication Check
+    user_data = auth_ctrl.get_logged_in_user()
+    if not user_data:
+        email, password = auth_view.ask_login_details()
+        # Capture user_data directly from login()
+        user_data = auth_ctrl.login(email, password)
+        if not user_data:
+            auth_view.display_login_failure()
+            return
+
+    auth_view.display_login_success()
+
+    # 2. Application Loop
+    while True:
+        menu_view.display_menu(user_data["department"])
+        choice = menu_view.ask_menu_option()
+
+        if choice == "1":
+            data = client_ctrl.list_all_clients()
+            client_view.display_clients(data)
+        elif choice == "2":
+            data = contract_ctrl.list_all_contracts()
+            contract_view.display_contracts(data)
+        elif choice == "3":
+            data = event_ctrl.list_all_events()
+            event_view.display_events(data)
+        elif choice == "0":
+            auth_ctrl.logout()
+            print("Goodbye!")
+            break
+        else:
+            print("Invalid option. Please try again.")
+
+
+if __name__ == "__main__":
+    main()
 

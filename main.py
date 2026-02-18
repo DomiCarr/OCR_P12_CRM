@@ -55,27 +55,30 @@ def main():
     user_data = auth_ctrl.get_logged_in_user()
     if not user_data:
         email, password = auth_view.ask_login_details()
-        if auth_ctrl.login(email, password):
-            user_data = auth_ctrl.get_logged_in_user()
-        else:
+        # Capture user_data directly from login()
+        user_data = auth_ctrl.login(email, password)
+        if not user_data:
             auth_view.display_login_failure()
             return
 
     auth_view.display_login_success()
 
-    # 2. Application Loop
+# 2. Application Loop
     while True:
         menu_view.display_menu(user_data["department"])
         choice = menu_view.ask_menu_option()
 
         if choice == "1":
-            data = client_ctrl.list_all_clients()
+            # Pass user_data to satisfy the @require_auth decorator
+            data = client_ctrl.list_all_clients(user_data=user_data)
             client_view.display_clients(data)
         elif choice == "2":
-            data = contract_ctrl.list_all_contracts()
+            # Pass user_data to satisfy the @require_auth decorator
+            data = contract_ctrl.list_all_contracts(user_data=user_data)
             contract_view.display_contracts(data)
         elif choice == "3":
-            data = event_ctrl.list_all_events()
+            # Pass user_data to satisfy the @require_auth decorator
+            data = event_ctrl.list_all_events(user_data=user_data)
             event_view.display_events(data)
         elif choice == "0":
             auth_ctrl.logout()

@@ -21,7 +21,7 @@ class AuthController:
         self.repository = employee_repository
         self.current_user_data: Optional[dict] = None
 
-    def login(self, email: str, password: str) -> bool:
+    def login(self, email: str, password: str) -> Optional[dict]:
         """
         Authenticate user and save a JWT locally if successful.
         """
@@ -31,9 +31,17 @@ class AuthController:
             # Generate and save token locally
             token = create_token(employee.id, employee.department.name)
             save_token(token)
-            return True
 
-        return False
+            # Return user data for main.py session management
+            user_data = {
+                "id": employee.id,
+                "full_name": employee.full_name,
+                "department": employee.department.name
+            }
+            self.current_user_data = user_data
+            return user_data
+
+        return None
 
     def logout(self) -> None:
         """
@@ -61,10 +69,16 @@ class AuthController:
 
     def check_user_permission(self, action: str) -> bool:
         """
-        Check permission based on the department stored in the JWT.
+        Check if the currently logged-in user has permission for an action.
         """
-        user = self.get_logged_in_user()
-        if not user:
+        if not self.current_user_data:
+            print("[DEBUG-AUTH] No current_user_data found in AuthController")
             return False
 
-        return has_permission(action, user["department"])
+        dept = self.current_user_data.get("department")
+
+        # Utilisation de l'import global de la ligne 10
+        result = has_permission(action, dept)
+
+        print(f"[DEBUG-AUTH] Checking: action='{action}', dept='{dept}' -> Result: {result}")
+        return result

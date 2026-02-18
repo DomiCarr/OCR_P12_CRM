@@ -1,34 +1,41 @@
 # app/utils/permissions.py
 """
-This module provides a centralized authorization system using an
-Access Control Matrix (ACM). It maps specific actions to departments
-to determine user permissions across the application.
+This module provides a centralized authorization system mapping
+specific actions to departments to determine user permissions.
 """
 
-from enum import Enum
-
-
-class DepartmentName(Enum):
-    """Enumeration of existing departments."""
-
-    MANAGEMENT = "MANAGEMENT"
-    SALES = "SALES"
-    SUPPORT = "SUPPORT"
-
-
-# The Permission Matrix: (Action, Department)
-# Use a set for O(1) lookups and clear mapping.
-PERMISSION_MATRIX = {
-    ("manage_employees", DepartmentName.MANAGEMENT.value),
-    ("manage_contracts", DepartmentName.MANAGEMENT.value),
-    ("manage_contracts", DepartmentName.SALES.value),
-    ("update_events", DepartmentName.MANAGEMENT.value),
-    ("update_events", DepartmentName.SUPPORT.value),
+# Mapping of permissions per department
+PERMISSIONS = {
+    'MANAGEMENT': [
+        'read_client',
+        'read_contract',
+        'read_event',
+        'update_contract',
+        'update_event',
+        'manage_employees'
+    ],
+    'SALES': [
+        'read_client',
+        'read_contract',
+        'read_event',
+        'create_client',
+        'update_client',
+        'create_contract',
+        'update_contract',
+        'manage_contracts'
+    ],
+    'SUPPORT': [
+        'read_client',
+        'read_contract',
+        'read_event',
+        'update_events'
+    ]
 }
 
 
 def has_permission(action: str, department_name: str) -> bool:
     """
-    Check if a specific couple (action, department) exists in the matrix.
+    Check if a specific department has the required permission.
     """
-    return (action, department_name) in PERMISSION_MATRIX
+    allowed_actions = PERMISSIONS.get(department_name, [])
+    return action in allowed_actions

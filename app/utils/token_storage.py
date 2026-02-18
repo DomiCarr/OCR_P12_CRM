@@ -6,6 +6,7 @@ a local file to maintain user sessions across CLI executions.
 """
 
 import os
+from typing import Optional
 
 TOKEN_FILE = ".token"
 

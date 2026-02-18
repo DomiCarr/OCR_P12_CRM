@@ -15,3 +15,9 @@ class EventRepository(BaseRepository[Event]):
 
     def __init__(self, session: Session):
         super().__init__(session, Event)
+
+    def get_all_events(self):
+        """
+        Fetch all events using the base repository method.
+        """
+        return self.get_all()

@@ -16,6 +16,12 @@ class ClientRepository(BaseRepository[Client]):
     def __init__(self, session: Session):
         super().__init__(session, Client)
 
+    def get_all_clients(self):
+        """
+        Fetch all clients by calling the inherited get_all method.
+        """
+        return self.get_all()
+
     def get_by_email(self, email: str):
         """
         Fetch a client by its unique email.

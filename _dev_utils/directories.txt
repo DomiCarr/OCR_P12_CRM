@@ -1,4 +1,4 @@
-Generated 2026-02-16 21:29:27
+Generated 2026-02-18 09:47:54
 
 Listing all files and folders (excluding env/, __pycache__, .git/, and _dev_utils/):
 
@@ -9,6 +9,10 @@ README.md
 app
     app/.DS_Store
     app/controllers
+        app/controllers/auth_controller.py
+        app/controllers/client_controller.py
+        app/controllers/contract_controller.py
+        app/controllers/event_controller.py
     app/models
         app/models/.DS_Store
         app/models/__init__.py
@@ -20,11 +24,26 @@ app
         app/models/event.py
     app/repositories
         app/repositories/base_repository.py
+        app/repositories/client_repository.py
+        app/repositories/contract_repository.py
+        app/repositories/employee_repository.py
+        app/repositories/event_repository.py
     app/static
     app/utils
         app/utils/auth.py
+        app/utils/decorators.py
+        app/utils/jwt_handler.py
+        app/utils/permissions.py
+        app/utils/token_storage.py
     app/views
+        app/views/auth_view.py
+        app/views/base_view.py
+        app/views/client_view.py
+        app/views/contract_view.py
+        app/views/event_view.py
+        app/views/main_menu_view.py
 config
     config/config.py
 init_db.py
+main.py
 requirements.txt

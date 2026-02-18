@@ -15,3 +15,9 @@ class ContractRepository(BaseRepository[Contract]):
 
     def __init__(self, session: Session):
         super().__init__(session, Contract)
+
+    def get_all_contracts(self):
+        """
+        Fetch all contracts using the base repository method.
+        """
+        return self.get_all()

@@ -6,7 +6,7 @@ verifying them against stored hashes.
 """
 
 from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
+from argon2.exceptions import VerifyMismatchError, InvalidHashError
 
 # Initialize the hasher with default secure parameters
 ph = PasswordHasher()
@@ -25,5 +25,5 @@ def verify_password(hashed_password: str, plain_password: str) -> bool:
     """
     try:
         return ph.verify(hashed_password, plain_password)
-    except VerifyMismatchError:
+    except (VerifyMismatchError, InvalidHashError):
         return False

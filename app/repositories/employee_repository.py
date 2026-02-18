@@ -19,6 +19,12 @@ class EmployeeRepository(BaseRepository[Employee]):
     def __init__(self, session: Session):
         super().__init__(session, Employee)
 
+    def get_all_employees(self):
+        """
+        Fetch all employees using the base repository method.
+        """
+        return self.get_all()
+
     def get_by_email(self, email: str) -> Optional[Employee]:
         """
         Fetch an employee by their unique email address.

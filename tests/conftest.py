@@ -36,18 +36,29 @@ def db_engine():
 def db_session(db_engine):
     """
     Provide a clean database session for each test.
-    Uses a JOINED transaction to allow rollback even after commits.
+    Uses a nested transaction (SAVEPOINT) to allow rollback.
     """
     connection = db_engine.connect()
-    # Begin a root transaction
+    # Start a transaction
     transaction = connection.begin()
 
-    # Bind the session to the connection with join_transaction=True
-    session = sessionmaker()(bind=connection, join_transaction=True)
+    # Bind session to connection
+    Session = sessionmaker(bind=connection)
+    session = Session()
+
+    # Create a SAVEPOINT to allow sub-transactions (commits in tests)
+    nested = connection.begin_nested()
+
+    @pytest.fixture
+    def _rollback_nested():
+        yield
+        if nested.is_active:
+            nested.rollback()
 
     yield session
 
     session.close()
-    # Rollback everything, including what was "committed" during the test
+    # Rollback the root transaction to undo everything
     transaction.rollback()
+    connection.close()
     connection.close()

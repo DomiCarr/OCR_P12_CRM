@@ -18,13 +18,6 @@ def test_create_and_decode_valid_token():
     token = create_token(1, "Management")
     decoded = decode_token(token)
 
-    print("\n--- DEBUG JWT ---")
-    print(f"SECRET_KEY used: {SECRET_KEY}")
-    print(f"ALGORITHM used: {ALGORITHM}")
-    print(f"Token generated: {token}")
-    print(f"Decoded result: {decoded}")
-    print("-----------------\n")
-
     assert decoded is not None
     assert decoded["sub"] == "1"
     assert decoded["department"] == "Management"

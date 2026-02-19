@@ -1,4 +1,4 @@
-Generated 2026-02-19 14:06:38
+Generated 2026-02-19 15:17:09
 
 ===============================================================================
     ./.pytest_cache/README.md
@@ -991,10 +991,10 @@ def create_token(employee_id: int, department_name: str) -> str:
     """
     now = datetime.datetime.now(datetime.UTC)
     payload = {
-        "sub": employee_id,
+        "sub": str(employee_id),
         "department": department_name,
-        "iat": now,
-        "exp": now + datetime.timedelta(hours=TOKEN_EXPIRATION_HOURS)
+        "iat": int(now.timestamp()),
+        "exp": int((now + datetime.timedelta(hours=TOKEN_EXPIRATION_HOURS)).timestamp())
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -1007,11 +1007,11 @@ def decode_token(token: str) -> Optional[dict]:
     try:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except jwt.ExpiredSignatureError as e:
-        # Report expiration to Sentry to monitor session timeouts
         sentry_sdk.capture_exception(e)
         return None
     except jwt.InvalidTokenError as e:
-        # Report invalid/tampered tokens as they might indicate security issues
+        # Debug print for development phase
+        print(f"DEBUG Decode Error: {e}")
         sentry_sdk.capture_exception(e)
         return None
 
@@ -1681,6 +1681,60 @@ def db_session(db_engine):
     connection.close()
 
 ===============================================================================
+    ./tests/test_auth_utils.py
+===============================================================================
+# tests/test_auth_utils.py
+"""
+Unit tests for authentication utilities.
+
+Tests included:
+- test_password_hashing: Verify Argon2 hashing and verification.
+- test_password_verification_fail: Ensure incorrect passwords are rejected.
+- test_token_lifecycle: Save, retrieve, and delete token from storage.
+"""
+
+import os
+from app.utils.auth import hash_password, verify_password
+from app.utils.token_storage import save_token, get_token, delete_token, TOKEN_FILE
+
+
+def test_password_hashing():
+    """Test that hashing and verification work correctly with Argon2."""
+    raw_password = "secure_password_2026"
+    hashed = hash_password(raw_password)
+
+    assert hashed != raw_password
+    assert verify_password(raw_password, hashed) is True
+
+
+def test_password_verification_fail():
+    """Test that verification fails with a wrong password."""
+    hashed = hash_password("correct_one")
+    assert verify_password("wrong_one", hashed) is False
+
+
+def test_token_lifecycle():
+    """Test the full lifecycle: saving, getting, and deleting a token."""
+    # Ensure a clean state
+    if os.path.exists(TOKEN_FILE):
+        os.remove(TOKEN_FILE)
+
+    test_token = "abc.123.jwt.token"
+
+    # Save
+    save_token(test_token)
+    assert os.path.exists(TOKEN_FILE)
+
+    # Get
+    retrieved = get_token()
+    assert retrieved == test_token
+
+    # Delete
+    delete_token()
+    assert not os.path.exists(TOKEN_FILE)
+    assert get_token() is None
+
+===============================================================================
     ./tests/test_jwt_handler.py
 ===============================================================================
 # tests/test_jwt_handler.py
@@ -1695,7 +1749,7 @@ Tests included:
 
 import datetime
 import jwt
-from app.utils.jwt_handler import create_token, decode_token
+from app.utils.jwt_handler import create_token, decode_token, SECRET_KEY, ALGORITHM
 
 
 def test_create_and_decode_valid_token():
@@ -1703,9 +1757,8 @@ def test_create_and_decode_valid_token():
     token = create_token(1, "Management")
     decoded = decode_token(token)
 
-    # Debug: si ça échoue encore, on verra pourquoi
-    assert decoded is not None, "Token decoding failed: returned None"
-    assert decoded["sub"] == 1
+    assert decoded is not None
+    assert decoded["sub"] == "1"
     assert decoded["department"] == "Management"
 
 
@@ -1716,14 +1769,11 @@ def test_decode_invalid_token():
 
 def test_expired_token():
     """Verify that an expired token returns None."""
-    # Import inside to ensure we use the same config as the app
-    from app.utils.jwt_handler import SECRET_KEY, ALGORITHM
-
     now = datetime.datetime.now(datetime.UTC)
     payload = {
-        "sub": 1,
+        "sub": "1",
         "department": "Sales",
-        "exp": now - datetime.timedelta(seconds=1)
+        "exp": int((now - datetime.timedelta(seconds=1)).timestamp())
     }
     expired_token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 

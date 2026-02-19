@@ -8,27 +8,32 @@ specific actions to departments to determine user permissions.
 PERMISSIONS = {
     'MANAGEMENT': [
         'read_client',
+        'create_client',
+        'update_client',
         'read_contract',
-        'read_event',
+        'create_contract',
         'update_contract',
+        'read_event',
         'update_event',
-        'manage_employees'
+        'read_employee',
+        'create_employee',
+        'update_employee',
+        'delete_employee'
     ],
     'SALES': [
         'read_client',
-        'read_contract',
-        'read_event',
         'create_client',
         'update_client',
-        'create_contract',
+        'read_contract',
         'update_contract',
-        'manage_contracts'
+        'read_event',
+        'create_event'
     ],
     'SUPPORT': [
         'read_client',
         'read_contract',
         'read_event',
-        'update_events'
+        'update_event'
     ]
 }
 

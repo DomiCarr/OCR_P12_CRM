@@ -15,8 +15,12 @@ class EventView(BaseView):
             print("No events found.")
             return
         for event in events:
-            support = event.support_contact.full_name if event.support_contact else "TBD"
+            support = (
+                event.support_contact.full_name
+                if event.support_contact
+                else "TBD"
+            )
             print(
                 f"ID: {event.id} | Name: {event.name} | "
-                f"Date: {event.event_date_start} | Support: {support}"
+                f"Date: {event.event_date} | Support: {support}"
             )

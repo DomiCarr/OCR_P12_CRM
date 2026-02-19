@@ -14,6 +14,7 @@ class Config:
     DB_PORT = os.getenv("DB_PORT")
     DB_NAME = os.getenv("DB_NAME")
     SECRET_KEY = os.getenv("SECRET_KEY")
+    SENTRY_DSN = os.getenv("SENTRY_DSN")
 
     @classmethod
     def get_db_url(cls):

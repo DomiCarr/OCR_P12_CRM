@@ -15,7 +15,8 @@ class ContractView(BaseView):
             print("No contracts found.")
             return
         for contract in contracts:
-            status = "Signed" if contract.is_signed else "Not Signed"
+            # Utilisation de 'status' tel que défini dans le modèle Contract
+            status = "Signed" if contract.status else "Not Signed"
             print(
                 f"ID: {contract.id} | Client: {contract.client.full_name} | "
                 f"Total Amount: {contract.total_amount} | Status: {status}"

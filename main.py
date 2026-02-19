@@ -17,12 +17,14 @@ from app.controllers.auth_controller import AuthController
 from app.controllers.client_controller import ClientController
 from app.controllers.contract_controller import ContractController
 from app.controllers.event_controller import EventController
+from app.controllers.employee_controller import EmployeeController
 
 from app.views.auth_view import AuthView
 from app.views.main_menu_view import MainMenuView
 from app.views.client_view import ClientView
 from app.views.contract_view import ContractView
 from app.views.event_view import EventView
+from app.views.employee_view import EmployeeView
 
 
 def main():
@@ -43,6 +45,7 @@ def main():
     client_ctrl = ClientController(client_repo, auth_ctrl)
     contract_ctrl = ContractController(contract_repo, auth_ctrl)
     event_ctrl = EventController(event_repo, auth_ctrl)
+    emp_ctrl = EmployeeController(emp_repo, auth_ctrl)
 
     # Initialize Views
     auth_view = AuthView()
@@ -50,6 +53,7 @@ def main():
     client_view = ClientView()
     contract_view = ContractView()
     event_view = EventView()
+    emp_view = EmployeeView()
 
     # 1. Authentication Check
     user_data = auth_ctrl.get_logged_in_user()
@@ -63,7 +67,7 @@ def main():
 
     auth_view.display_login_success()
 
-# 2. Application Loop
+    # 2. Application Loop
     while True:
         menu_view.display_menu(user_data["department"])
         choice = menu_view.ask_menu_option()
@@ -80,6 +84,12 @@ def main():
             # Pass user_data to satisfy the @require_auth decorator
             data = event_ctrl.list_all_events(user_data=user_data)
             event_view.display_events(data)
+        elif choice == "4":
+            data = emp_ctrl.list_all_employees(user_data=user_data)
+            emp_view.display_employees(data)
+        elif choice == "5":
+            details = emp_view.ask_employee_details()
+            emp_ctrl.create_employee(user_data=user_data, employee_data=details)
         elif choice == "0":
             auth_ctrl.logout()
             print("Goodbye!")

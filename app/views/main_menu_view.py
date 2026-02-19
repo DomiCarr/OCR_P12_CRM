@@ -18,7 +18,8 @@ class MainMenuView(BaseView):
         print("3. List all events")
 
         if department == "MANAGEMENT":
-            print("10. Manage employees (Admin)")
+            print("4. List all employees")
+            print("5. Create new employee")
         elif department == "SALES":
             print("20. Create new client")
         elif department == "SUPPORT":

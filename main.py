@@ -78,9 +78,6 @@ def main():
     # 2. Application Loop
     while True:
 
-        # TEST SENTRY: Déclenche une erreur volontaire
-        division_by_zero = 1 / 0
-
         menu_view.display_menu(user_data["department"])
         choice = menu_view.ask_menu_option()
 
@@ -102,6 +99,15 @@ def main():
         elif choice == "5":
             details = emp_view.ask_employee_details()
             emp_ctrl.create_employee(user_data=user_data, employee_data=details)
+        elif choice == "6":
+            emp_id = emp_view.ask_input("Enter Employee ID to update")
+            if emp_id.isdigit():
+                updates = emp_view.ask_update_details()
+                emp_ctrl.update_employee(
+                    user_data=user_data,
+                    emp_id=int(emp_id),
+                    update_data=updates
+                )
         elif choice == "0":
             auth_ctrl.logout()
             print("Goodbye!")

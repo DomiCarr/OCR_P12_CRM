@@ -17,8 +17,9 @@ class EmployeeView(BaseView):
         for emp in employees:
             dept_name = emp.department.name if emp.department else "N/A"
             print(
-                f"ID: {emp.id} | Name: {emp.full_name} | "
-                f"Email: {emp.email} | Dept: {dept_name}"
+                f"ID: {emp.id} | No: {emp.employee_number} | "
+                f"Name: {emp.full_name} | Email: {emp.email} | "
+                f"Dept: {dept_name}"
             )
 
     def ask_employee_details(self) -> dict:
@@ -45,3 +46,24 @@ class EmployeeView(BaseView):
             "employee_number": employee_number,
             "department_id": int(department_id) if department_id.isdigit() else 0
         }
+
+    def ask_update_details(self) -> dict:
+        """Prompt user for employee updates (all fields optional)."""
+        print("\n=== Update Employee (Leave blank to keep current value) ===")
+
+        full_name = self.ask_input("New Full Name (optional)")
+        email = self.ask_input("New Email (optional)")
+        password = self.ask_input("New Password (optional)")
+        dept_id = self.ask_input("New Dept ID (optional)")
+
+        details = {}
+        if full_name:
+            details["full_name"] = full_name
+        if email:
+            details["email"] = email
+        if password:
+            details["password"] = password
+        if dept_id:
+            details["department_id"] = int(dept_id) if dept_id.isdigit() else 0
+
+        return details

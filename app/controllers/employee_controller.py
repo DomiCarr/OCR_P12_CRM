@@ -49,3 +49,20 @@ class EmployeeController:
         # Pass the instance (not the dict) to the repository
         created_employee = self.repository.add(new_employee)
         return created_employee
+
+    @require_auth
+    def update_employee(self, user_data: dict, emp_id: int, update_data: dict):
+        """
+        Update an existing employee's data.
+        """
+        self.auth_controller.current_user_data = user_data
+
+        if not self.auth_controller.check_user_permission("update_employee"):
+            print("\n[ERROR] You do not have permission to update employees.")
+            return None
+
+        if "password" in update_data:
+            update_data["password"] = hash_password(update_data["password"])
+
+        updated_emp = self.repository.update(emp_id, update_data)
+        return updated_emp

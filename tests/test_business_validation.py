@@ -6,7 +6,6 @@ Tests included:
 - test_contract_amounts_logic: Verify remaining amount <= total amount.
 - test_event_date_coherence: Verify event end date is after start date.
 - test_attendees_positive: Verify number of attendees is not negative.
-- test_client_email_format_basic: Verify basic email integrity.
 """
 
 import uuid
@@ -15,34 +14,62 @@ from datetime import datetime, timedelta
 from app.models.contract import Contract
 from app.models.event import Event
 from app.models.client import Client
-from app.repositories.contract_repository import ContractRepository
-from app.repositories.event_repository import EventRepository
+from app.models.employee import Employee
+from app.models.department import Department
+from app.repositories.base_repository import BaseRepository
 
 
-def test_contract_amounts_logic(db_session, filter_setup):
-    """Verify that we cannot have a remaining amount higher than total."""
-    # Note: validation usually happens in the Controller, but we check
-    # here if the model/db handles it or if the test detects the anomaly.
-    repo = ContractRepository(db_session)
-    client_id = filter_setup["client"].id
-    sales_id = filter_setup["sales"].id
+@pytest.fixture
+def validation_setup(db_session):
+    """Setup minimal data for validation tests."""
+    dept_repo = BaseRepository(db_session, Department)
+    dept = dept_repo.add(Department(name=f"VAL_{uuid.uuid4().hex[:6]}"))
 
+    sales = Employee(
+        full_name="Sales", email=f"s_{uuid.uuid4().hex[:6]}@test.com",
+        password="h", employee_number=f"S{uuid.uuid4().hex[:4]}",
+        department_id=dept.id
+    )
+    db_session.add(sales)
+    db_session.commit()
+
+    client = Client(
+        full_name="C", email=f"c_{uuid.uuid4().hex[:6]}@test.com",
+        phone="0", company_name="C", sales_contact_id=sales.id
+    )
+    db_session.add(client)
+    db_session.commit()
+
+    return {"sales": sales, "client": client}
+
+
+def test_contract_amounts_logic(db_session, validation_setup):
+    """Verify state of a contract with logically inconsistent amounts."""
+    s = validation_setup
     contract = Contract(
         total_amount=100.00,
-        remaining_amount=150.00,  # Logical error: 150 > 100
+        remaining_amount=150.00,
         is_signed=True,
-        client_id=client_id,
-        sales_contact_id=sales_id
+        client_id=s["client"].id,
+        sales_contact_id=s["sales"].id
     )
-
-    # This test highlights that we need a check in the controller later
+    # This highlights that the model currently accepts the inconsistency
     assert contract.remaining_amount > contract.total_amount
 
 
-def test_event_date_coherence(db_session, filter_setup):
-    """Verify event dates are chronological."""
+def test_event_date_coherence(db_session, validation_setup):
+    """Verify state of an event with non-chronological dates."""
+    s = validation_setup
     start = datetime.now()
-    end = start - timedelta(hours=1)  # Logical error: ends before start
+    end = start - timedelta(hours=1)
+
+    # Create contract for the event
+    contract = Contract(
+        total_amount=100, remaining_amount=0, is_signed=True,
+        client_id=s["client"].id, sales_contact_id=s["sales"].id
+    )
+    db_session.add(contract)
+    db_session.commit()
 
     event = Event(
         name="Invalid Date Event",
@@ -50,24 +77,24 @@ def test_event_date_coherence(db_session, filter_setup):
         event_date_end=end,
         location="Paris",
         attendees=10,
-        notes="Testing dates",
-        client_id=filter_setup["client"].id,
-        contract_id=filter_setup["contract"].id
+        notes="Testing",
+        client_id=s["client"].id,
+        contract_id=contract.id
     )
-
     assert event.event_date_end < event.event_date_start
 
 
-def test_attendees_positive(filter_setup):
-    """Verify that attendees count is a realistic number."""
+def test_attendees_positive(db_session, validation_setup):
+    """Verify state of an event with negative attendees."""
+    s = validation_setup
     event = Event(
         name="Negative Attendees",
         event_date_start=datetime.now(),
         event_date_end=datetime.now(),
         location="L",
-        attendees=-5,  # Logical error
+        attendees=-5,
         notes="N",
-        client_id=filter_setup["client"].id,
-        contract_id=filter_setup["contract"].id
+        client_id=s["client"].id,
+        contract_id=1 # Using dummy ID for unit check
     )
     assert event.attendees < 0

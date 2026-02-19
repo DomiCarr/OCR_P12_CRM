@@ -5,6 +5,7 @@ Ensures authentication and permission checks before data access.
 """
 
 from datetime import datetime
+from app.models.client import Client
 from app.repositories.client_repository import ClientRepository
 from app.utils.decorators import require_auth
 
@@ -37,8 +38,43 @@ class ClientController:
             if not client_data.get("last_contact"):
                 client_data["last_contact"] = datetime.now()
 
-            new_client = self.repository.add_client(client_data)
-            print(f"Client '{new_client.full_name}' created successfully.")
-            return new_client
+            # Create the Client instance before passing it to the repository
+            new_client = Client(**client_data)
+            created_client = self.repository.add(new_client)
+
+            if created_client:
+                print(f"Client '{created_client.full_name}' created.")
+            return created_client
+
         print("Access denied: You do not have permission to create a client.")
         return None
+
+    @require_auth
+    def update_client(self, user_data: dict, client_id: int, updates: dict):
+        """Update client if user is assigned sales contact or management."""
+        self.auth_controller.current_user_data = user_data
+        if not self.auth_controller.check_user_permission("update_client"):
+            print("Access denied: No update permission.")
+            return None
+
+        client = self.repository.get_by_id(client_id)
+        if not client:
+            print("Client not found.")
+            return None
+
+        # Logic: Sales can only update their own clients. Management can update all.
+        is_owner = client.sales_contact_id == user_data["id"]
+        is_management = user_data["department"] == "MANAGEMENT"
+
+        if not (is_owner or is_management):
+            print("Access denied: You are not the assigned sales contact.")
+            return None
+
+        # Update last_contact timestamp
+        updates["last_contact"] = datetime.now()
+
+        # FIXED: Pass 'updates' as a dict to match BaseRepository.update signature
+        updated_client = self.repository.update(client_id, updates)
+        if updated_client:
+            print(f"Client '{updated_client.full_name}' updated.")
+        return updated_client

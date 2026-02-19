@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from app.models.department import Department
     from app.models.client import Client
     from app.models.event import Event
+    from app.models.contract import Contract
 
 
 class Employee(Base):
@@ -38,6 +39,9 @@ class Employee(Base):
 
     # Managed entities (Sales/Support roles)
     managed_clients: Mapped[list["Client"]] = relationship(
+        back_populates="sales_contact"
+    )
+    managed_contracts: Mapped[list["Contract"]] = relationship(
         back_populates="sales_contact"
     )
     assigned_events: Mapped[list["Event"]] = relationship(

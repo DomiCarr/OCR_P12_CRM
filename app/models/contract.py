@@ -18,6 +18,7 @@ from app.models.base import (
 if TYPE_CHECKING:
     from app.models.client import Client
     from app.models.event import Event
+    from app.models.employee import Employee
 
 
 class Contract(Base):
@@ -30,22 +31,26 @@ class Contract(Base):
     id: Mapped[pk_id]
     total_amount: Mapped[float] = mapped_column(Numeric(10, 2))
     remaining_amount: Mapped[float] = mapped_column(Numeric(10, 2))
-    status: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_signed: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Audit timestamps
-    created_at: Mapped[timestamp_now]
+    creation_date: Mapped[timestamp_now]
     last_update: Mapped[timestamp_update]
 
     # Foreign Keys
     client_id: Mapped[int] = mapped_column(ForeignKey("client.id"))
+    sales_contact_id: Mapped[int] = mapped_column(ForeignKey("employee.id"))
 
     # Relationships
     client: Mapped["Client"] = relationship(back_populates="contracts")
+    sales_contact: Mapped["Employee"] = relationship(
+        back_populates="managed_contracts"
+    )
     event: Mapped["Event"] = relationship(back_populates="contract")
 
     def __repr__(self) -> str:
         return (
             f"<Contract(id={self.id}, "
             f"remaining={self.remaining_amount}, "
-            f"signed={self.status})>"
+            f"signed={self.is_signed})>"
         )

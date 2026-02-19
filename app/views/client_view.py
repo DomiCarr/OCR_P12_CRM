@@ -17,7 +17,8 @@ class ClientView(BaseView):
         for client in clients:
             print(
                 f"ID: {client.id} | Name: {client.full_name} | "
-                f"Email: {client.email} | Company: {client.company_name}"
+                f"Email: {client.email} | Company: {client.company_name} | "
+                f"Last Contact: {client.last_contact}"
             )
 
     def ask_client_details(self) -> dict:
@@ -27,5 +28,9 @@ class ClientView(BaseView):
             "full_name": self.ask_input("Full Name"),
             "email": self.ask_input("Email"),
             "phone": self.ask_input("Phone"),
-            "company_name": self.ask_input("Company Name")
+            "company_name": self.ask_input("Company Name"),
+            "last_contact": self.ask_input(
+                "Last Contact Date (YYYY-MM-DD HH:MM:SS) "
+                "[Leave empty for now]"
+            )
         }

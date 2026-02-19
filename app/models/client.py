@@ -38,8 +38,11 @@ class Client(Base):
     phone: Mapped[str_20]
     company_name: Mapped[str_50]
 
+    # New field for last business contact
+    last_contact: Mapped[timestamp_now]
+
     # Audit timestamps
-    created_at: Mapped[timestamp_now]
+    creation_date: Mapped[timestamp_now]
     last_update: Mapped[timestamp_update]
 
     # Foreign Key to the Sales Contact (Employee)

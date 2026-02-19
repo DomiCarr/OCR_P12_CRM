@@ -4,6 +4,7 @@ Entry point for the Epic Events CRM application.
 Manages the main loop and coordinate between controllers and views.
 """
 
+import sentry_sdk
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from config.config import Config
@@ -25,6 +26,13 @@ from app.views.client_view import ClientView
 from app.views.contract_view import ContractView
 from app.views.event_view import EventView
 from app.views.employee_view import EmployeeView
+
+# Initialize Sentry
+sentry_sdk.init(
+    dsn=Config.SENTRY_DSN,
+    traces_sample_rate=1.0,
+    profiles_sample_rate=1.0,
+)
 
 
 def main():
@@ -69,6 +77,10 @@ def main():
 
     # 2. Application Loop
     while True:
+
+        # TEST SENTRY: Déclenche une erreur volontaire
+        division_by_zero = 1 / 0
+
         menu_view.display_menu(user_data["department"])
         choice = menu_view.ask_menu_option()
 

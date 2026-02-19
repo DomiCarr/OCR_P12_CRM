@@ -3,6 +3,7 @@
 Data access layer for Client-specific operations.
 """
 
+from typing import Optional, List
 from sqlalchemy.orm import Session
 from app.models.client import Client
 from app.repositories.base_repository import BaseRepository
@@ -16,13 +17,13 @@ class ClientRepository(BaseRepository[Client]):
     def __init__(self, session: Session):
         super().__init__(session, Client)
 
-    def get_all_clients(self):
+    def get_all_clients(self) -> List[Client]:
         """
         Fetch all clients by calling the inherited get_all method.
         """
         return self.get_all()
 
-    def get_by_email(self, email: str):
+    def get_by_email(self, email: str) -> Optional[Client]:
         """
         Fetch a client by its unique email.
         """

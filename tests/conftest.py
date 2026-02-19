@@ -36,16 +36,18 @@ def db_engine():
 def db_session(db_engine):
     """
     Provide a clean database session for each test.
-    Rolls back any changes after the test to keep the DB clean.
+    Uses a JOINED transaction to allow rollback even after commits.
     """
     connection = db_engine.connect()
+    # Begin a root transaction
     transaction = connection.begin()
 
-    session_factory = sessionmaker(bind=connection)
-    session = session_factory()
+    # Bind the session to the connection with join_transaction=True
+    session = sessionmaker()(bind=connection, join_transaction=True)
 
     yield session
 
     session.close()
+    # Rollback everything, including what was "committed" during the test
     transaction.rollback()
     connection.close()

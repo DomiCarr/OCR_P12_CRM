@@ -1,10 +1,11 @@
-Generated 2026-02-18 09:47:54
+Generated 2026-02-19 13:34:41
 
 Listing all files and folders (excluding env/, __pycache__, .git/, and _dev_utils/):
 
 .DS_Store
 .env
 .gitignore
+.token
 README.md
 app
     app/.DS_Store
@@ -12,6 +13,7 @@ app
         app/controllers/auth_controller.py
         app/controllers/client_controller.py
         app/controllers/contract_controller.py
+        app/controllers/employee_controller.py
         app/controllers/event_controller.py
     app/models
         app/models/.DS_Store
@@ -30,6 +32,7 @@ app
         app/repositories/event_repository.py
     app/static
     app/utils
+        app/utils/.DS_Store
         app/utils/auth.py
         app/utils/decorators.py
         app/utils/jwt_handler.py
@@ -40,10 +43,16 @@ app
         app/views/base_view.py
         app/views/client_view.py
         app/views/contract_view.py
+        app/views/employee_view.py
         app/views/event_view.py
         app/views/main_menu_view.py
+check_auth.py
 config
     config/config.py
 init_db.py
 main.py
+pytest.ini
 requirements.txt
+tests
+    tests/__init__.py
+    tests/conftest.py

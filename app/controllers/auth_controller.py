@@ -5,6 +5,7 @@ and local storage to provide persistent user sessions.
 """
 
 from typing import Optional
+import sentry_sdk
 from app.repositories.employee_repository import EmployeeRepository
 from app.utils.auth import verify_password
 from app.utils.permissions import has_permission
@@ -38,6 +39,14 @@ class AuthController:
                 "full_name": employee.full_name,
                 "department": employee.department.name
             }
+
+            # Attach user identity to Sentry scope for error tracking
+            sentry_sdk.set_user({
+                "id": str(employee.id),
+                "username": employee.full_name,
+                "department": employee.department.name
+            })
+
             self.current_user_data = user_data
             return user_data
 
@@ -48,6 +57,8 @@ class AuthController:
         Clear the session by deleting the local token.
         """
         delete_token()
+        # Clear Sentry user context to avoid cross-user error reporting
+        sentry_sdk.set_user(None)
         self.current_user_data = None
 
     def get_logged_in_user(self) -> Optional[dict]:
@@ -60,6 +71,11 @@ class AuthController:
 
         payload = decode_token(token)
         if payload:
+            # Restore Sentry user identity for persistent sessions
+            sentry_sdk.set_user({
+                "id": str(payload.get("id")),
+                "department": payload.get("department")
+            })
             self.current_user_data = payload
             return payload
 
@@ -72,13 +88,7 @@ class AuthController:
         Check if the currently logged-in user has permission for an action.
         """
         if not self.current_user_data:
-            print("[DEBUG-AUTH] No current_user_data found in AuthController")
             return False
 
         dept = self.current_user_data.get("department")
-
-        # Utilisation de l'import global de la ligne 10
-        result = has_permission(action, dept)
-
-        print(f"[DEBUG-AUTH] Checking: action='{action}', dept='{dept}' -> Result: {result}")
-        return result
+        return has_permission(action, dept)

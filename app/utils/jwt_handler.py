@@ -9,6 +9,7 @@ import os
 import datetime
 from typing import Optional
 import jwt
+import sentry_sdk
 
 
 # Configuration from environment variables
@@ -22,14 +23,12 @@ def create_token(employee_id: int, department_name: str) -> str:
     Generate a JWT token containing employee ID and department.
     The token is set to expire in 12 hours.
     """
+    now = datetime.datetime.now(datetime.UTC)
     payload = {
-        "sub": employee_id,
+        "sub": str(employee_id),
         "department": department_name,
-        "iat": datetime.datetime.utcnow(),
-        "exp": (
-            datetime.datetime.utcnow() +
-            datetime.timedelta(hours=TOKEN_EXPIRATION_HOURS)
-        )
+        "iat": int(now.timestamp()),
+        "exp": int((now + datetime.timedelta(hours=TOKEN_EXPIRATION_HOURS)).timestamp())
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -41,5 +40,11 @@ def decode_token(token: str) -> Optional[dict]:
     """
     try:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+    except jwt.ExpiredSignatureError as e:
+        sentry_sdk.capture_exception(e)
+        return None
+    except jwt.InvalidTokenError as e:
+        # Debug print for development phase
+        print(f"DEBUG Decode Error: {e}")
+        sentry_sdk.capture_exception(e)
         return None

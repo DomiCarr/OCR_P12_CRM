@@ -26,7 +26,6 @@ class EmployeeController:
         if self.auth_controller.check_user_permission("read_employee"):
             return self.repository.get_all()
 
-        print("\n[DEBUG] Access denied: Required permission 'read_employee'")
         return []
 
     @require_auth
@@ -37,7 +36,6 @@ class EmployeeController:
         self.auth_controller.current_user_data = user_data
 
         if not self.auth_controller.check_user_permission("create_employee"):
-            print("\n[ERROR] You do not have permission to create employees.")
             return None
 
         # Hash the password before storage
@@ -58,7 +56,6 @@ class EmployeeController:
         self.auth_controller.current_user_data = user_data
 
         if not self.auth_controller.check_user_permission("update_employee"):
-            print("\n[ERROR] You do not have permission to update employees.")
             return None
 
         if "password" in update_data:

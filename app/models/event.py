@@ -32,13 +32,14 @@ class Event(Base):
 
     id: Mapped[pk_id]
     name: Mapped[str_50]
-    event_date: Mapped[timestamp_now]
+    event_date_start: Mapped[timestamp_now]
+    event_date_end: Mapped[timestamp_now]
     location: Mapped[str_50]
     attendees: Mapped[int]
     notes: Mapped[text_type]
 
     # Audit timestamps
-    created_at: Mapped[timestamp_now]
+    creation_date: Mapped[timestamp_now]
     last_update: Mapped[timestamp_update]
 
     # Foreign Keys
@@ -56,4 +57,4 @@ class Event(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<Event(name={self.name}, date={self.event_date})>"
+        return f"<Event(name={self.name}, start={self.event_date_start})>"

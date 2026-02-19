@@ -22,5 +22,6 @@ class EventView(BaseView):
             )
             print(
                 f"ID: {event.id} | Name: {event.name} | "
-                f"Date: {event.event_date} | Support: {support}"
+                f"From: {event.event_date_start} To: {event.event_date_end} | "
+                f"Support: {support}"
             )

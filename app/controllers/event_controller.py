@@ -19,6 +19,7 @@ class EventController:
         """
         Fetch all events if allowed.
         """
+        self.auth_controller.current_user_data = user_data
         if self.auth_controller.check_user_permission("read_event"):
             return self.repository.get_all_events()
         return None

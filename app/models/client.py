@@ -46,8 +46,9 @@ class Client(Base):
     last_update: Mapped[timestamp_update]
 
     # Foreign Key to the Sales Contact (Employee)
-    sales_contact_id: Mapped[int] = mapped_column(
-        ForeignKey("employee.id")
+    sales_contact_id: Mapped[int | None] = mapped_column(
+        ForeignKey("employee.id"),
+        nullable=True,
     )
 
     # Relationships

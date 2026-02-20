@@ -1,4 +1,3 @@
-# app/views/client_view.py
 """
 View for Client related interactions.
 """
@@ -33,4 +32,18 @@ class ClientView(BaseView):
                 "Last Contact Date (YYYY-MM-DD HH:MM:SS) "
                 "[Leave empty for now]"
             )
+        }
+
+    def ask_client_update_details(self) -> dict:
+        """Prompt user for client update information."""
+        print("\n=== Update Client ===")
+        return {
+            "full_name": self.ask_input("Full Name [Leave empty to skip]"),
+            "email": self.ask_input("Email [Leave empty to skip]"),
+            "phone": self.ask_input("Phone [Leave empty to skip]"),
+            "company_name": self.ask_input("Company Name [Leave empty to skip]"),
+            "last_contact": self.ask_input(
+                "Last Contact Date (YYYY-MM-DD HH:MM:SS) "
+                "[Leave empty to skip]"
+            ),
         }

@@ -5,30 +5,45 @@ Ensures user_data is available via token or arguments.
 """
 
 from functools import wraps
-from typing import Callable, Any
+from typing import Any, Callable
+
 import sentry_sdk
-from app.utils.token_storage import get_token
+
 from app.utils.jwt_handler import decode_token
+from app.utils.token_storage import get_token
 
 
+# Handles dynamic `user_data` injection from kwargs, args, controller state, or token.
 def require_auth(func: Callable) -> Callable:
     """
     Decorator that ensures a user is authenticated before executing a method.
-    Injects user_data into the function arguments.
+    Injects user_data into kwargs to avoid shifting positional arguments.
     """
+
+    def is_user_data(value: Any) -> bool:
+        if not isinstance(value, dict):
+            return False
+        return "id" in value and "department" in value
+
     @wraps(func)
     def wrapper(self, *args, **kwargs) -> Any:
-        # Add a breadcrumb to track the authentication attempt in Sentry
         sentry_sdk.add_breadcrumb(
             category="auth",
             message=f"Checking authentication for {func.__name__}",
             level="info",
         )
 
-        # 1. Check if user_data is already passed
         user_data = kwargs.get("user_data")
 
-        # 2. If not, try to retrieve it from token storage
+        if not user_data and args and is_user_data(args[0]):
+            user_data = args[0]
+
+        if not user_data and hasattr(self, "auth_controller"):
+            auth_ctrl = getattr(self, "auth_controller")
+            current = getattr(auth_ctrl, "current_user_data", None)
+            if current:
+                user_data = current
+
         if not user_data:
             token = get_token()
             if token:
@@ -40,10 +55,17 @@ def require_auth(func: Callable) -> Callable:
                 message="Authentication failed: No user data found",
                 level="warning",
             )
-            return []
+            return None
 
-        # 3. Inject user_data for the controller logic
-        kwargs["user_data"] = user_data
-        return func(self, *args, **kwargs)
+        if "user_data" in kwargs:
+            return func(self, *args, **kwargs)
+
+        if args and is_user_data(args[0]):
+            return func(self, *args, **kwargs)
+
+        try:
+            return func(self, *args, user_data=user_data, **kwargs)
+        except TypeError:
+            return func(self, user_data, *args, **kwargs)
 
     return wrapper

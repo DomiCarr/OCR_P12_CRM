@@ -26,9 +26,12 @@ def create_token(employee_id: int, department_name: str) -> str:
     now = datetime.datetime.now(datetime.UTC)
     payload = {
         "sub": str(employee_id),
+        "id": employee_id,
         "department": department_name,
         "iat": int(now.timestamp()),
-        "exp": int((now + datetime.timedelta(hours=TOKEN_EXPIRATION_HOURS)).timestamp())
+        "exp": int(
+            (now + datetime.timedelta(hours=TOKEN_EXPIRATION_HOURS)).timestamp()
+        ),
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 

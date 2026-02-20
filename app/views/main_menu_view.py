@@ -21,10 +21,20 @@ class MainMenuView(BaseView):
             print("4. List all employees")
             print("5. Create new employee")
             print("6. Update an employee")
+            print("7. Create new contract")
+            print("8. Update a contract")
+            print("9. Assign support to an event")
+            print("10. List events without support")
         elif department == "SALES":
             print("20. Create new client")
+            print("21. Update a client")
+            print("22. Update a contract")
+            print("23. List unsigned contracts")
+            print("24. List unpaid contracts")
+            print("25. Create new event")
         elif department == "SUPPORT":
-            print("30. Update my events")
+            print("30. List my events")
+            print("31. Update my events")
 
         print("0. Logout and Exit")
 

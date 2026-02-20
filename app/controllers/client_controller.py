@@ -18,8 +18,15 @@ class ClientController:
         self.auth_controller = auth_controller
 
     @require_auth
-    def list_all_clients(self, user_data: dict):
+    def list_all_clients(self, *args, user_data: dict | None = None):
         """Fetch all clients if the user has the 'read_client' permission."""
+        if user_data is None and args:
+            if isinstance(args[0], dict) and "id" in args[0]:
+                user_data = args[0]
+
+        if user_data is None:
+            return []
+
         self.auth_controller.current_user_data = user_data
         permission = "read_client"
         if self.auth_controller.check_user_permission(permission):
@@ -27,18 +34,35 @@ class ClientController:
         return []
 
     @require_auth
-    def create_client(self, user_data: dict, client_data: dict):
+    def create_client(
+        self,
+        *args,
+        user_data: dict | None = None,
+        client_data: dict | None = None,
+    ):
         """Create a new client and associate with the current sales person."""
+        if client_data is None and args:
+            first = args[0]
+            if isinstance(first, dict) and "id" in first and "department" in first:
+                user_data = first
+                if len(args) > 1:
+                    client_data = args[1]
+            else:
+                client_data = first
+
+        if user_data is None:
+            user_data = getattr(self.auth_controller, "current_user_data", None)
+
+        if not user_data or not client_data:
+            return None
+
         self.auth_controller.current_user_data = user_data
         if self.auth_controller.check_user_permission("create_client"):
-            # Set sales_contact_id from the current logged-in user
             client_data["sales_contact_id"] = user_data["id"]
 
-            # Set last_contact to now if not provided
             if not client_data.get("last_contact"):
                 client_data["last_contact"] = datetime.now()
 
-            # Create the Client instance before passing it to the repository
             new_client = Client(**client_data)
             created_client = self.repository.add(new_client)
 

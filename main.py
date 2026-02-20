@@ -4,6 +4,8 @@ Entry point for the Epic Events CRM application.
 Manages the main loop and coordinate between controllers and views.
 """
 
+from datetime import datetime
+
 import sentry_sdk
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -70,7 +72,6 @@ def main():
         user_data = auth_ctrl.get_logged_in_user()
         if not user_data:
             email, password = auth_view.ask_login_details()
-            # Capture user_data directly from login()
             user_data = auth_ctrl.login(email, password)
             if not user_data:
                 auth_view.display_login_failure()
@@ -85,24 +86,38 @@ def main():
             choice = menu_view.ask_menu_option()
 
             if choice == "1":
-                # Pass user_data to satisfy the @require_auth decorator
                 data = client_ctrl.list_all_clients(user_data=user_data)
                 client_view.display_clients(data)
+
             elif choice == "2":
-                # Pass user_data to satisfy the @require_auth decorator
                 data = contract_ctrl.list_all_contracts(user_data=user_data)
                 contract_view.display_contracts(data)
+
             elif choice == "3":
-                # Pass user_data to satisfy the @require_auth decorator
                 data = event_ctrl.list_all_events(user_data=user_data)
                 event_view.display_events(data)
+
             elif choice == "4":
+                if user_data["department"] != "MANAGEMENT":
+                    print("Invalid option. Please try again.")
+                    continue
                 data = emp_ctrl.list_all_employees(user_data=user_data)
                 emp_view.display_employees(data)
+
             elif choice == "5":
+                if user_data["department"] != "MANAGEMENT":
+                    print("Invalid option. Please try again.")
+                    continue
                 details = emp_view.ask_employee_details()
-                emp_ctrl.create_employee(user_data=user_data, employee_data=details)
+                emp_ctrl.create_employee(
+                    user_data=user_data,
+                    employee_data=details
+                )
+
             elif choice == "6":
+                if user_data["department"] != "MANAGEMENT":
+                    print("Invalid option. Please try again.")
+                    continue
                 emp_id = emp_view.ask_input("Enter Employee ID to update")
                 if emp_id.isdigit():
                     updates = emp_view.ask_update_details()
@@ -111,15 +126,187 @@ def main():
                         emp_id=int(emp_id),
                         update_data=updates
                     )
+
+            elif choice == "7":
+                if user_data["department"] != "MANAGEMENT":
+                    print("Invalid option. Please try again.")
+                    continue
+                details = contract_view.ask_contract_details()
+                contract_ctrl.create_contract(
+                    user_data=user_data,
+                    contract_data=details
+                )
+
+            elif choice == "8":
+                if user_data["department"] != "MANAGEMENT":
+                    print("Invalid option. Please try again.")
+                    continue
+                contract_id = contract_view.ask_input(
+                    "Enter Contract ID to update"
+                )
+                if contract_id.isdigit():
+                    updates = contract_view.ask_contract_update_details()
+                    contract_ctrl.update_contract(
+                        user_data=user_data,
+                        contract_id=int(contract_id),
+                        updates=updates
+                    )
+
+            elif choice == "9":
+                if user_data["department"] != "MANAGEMENT":
+                    print("Invalid option. Please try again.")
+                    continue
+                event_id = event_view.ask_input(
+                    "Enter Event ID to assign support"
+                )
+                support_id = event_view.ask_input(
+                    "Enter Support Employee ID"
+                )
+                if event_id.isdigit() and support_id.isdigit():
+                    updates = {"support_contact_id": int(support_id)}
+                    event_ctrl.update_event(
+                        user_data=user_data,
+                        event_id=int(event_id),
+                        updates=updates
+                    )
+
+            elif choice == "10":
+                if user_data["department"] != "MANAGEMENT":
+                    print("Invalid option. Please try again.")
+                    continue
+                events = event_ctrl.list_all_events(
+                    user_data=user_data
+                ) or []
+                no_support = [
+                    event for event in events
+                    if not event.support_contact_id
+                ]
+                event_view.display_events(no_support)
+
+            elif choice == "20":
+                if user_data["department"] != "SALES":
+                    print("Invalid option. Please try again.")
+                    continue
+                details = client_view.ask_client_details()
+                last_contact = details.get("last_contact", "").strip()
+                if not last_contact:
+                    details.pop("last_contact", None)
+                else:
+                    try:
+                        details["last_contact"] = datetime.strptime(
+                            last_contact,
+                            "%Y-%m-%d %H:%M:%S",
+                        )
+                    except ValueError:
+                        details.pop("last_contact", None)
+                client_ctrl.create_client(
+                    user_data=user_data,
+                    client_data=details
+                )
+
+            elif choice == "21":
+                if user_data["department"] != "SALES":
+                    print("Invalid option. Please try again.")
+                    continue
+                client_id = client_view.ask_input(
+                    "Enter Client ID to update"
+                )
+                if client_id.isdigit():
+                    updates = client_view.ask_update_details()
+                    client_ctrl.update_client(
+                        user_data=user_data,
+                        client_id=int(client_id),
+                        updates=updates
+                    )
+
+            elif choice == "22":
+                if user_data["department"] != "SALES":
+                    print("Invalid option. Please try again.")
+                    continue
+                contract_id = contract_view.ask_input(
+                    "Enter Contract ID to update"
+                )
+                if contract_id.isdigit():
+                    updates = contract_view.ask_contract_update_details()
+                    contract_ctrl.update_contract(
+                        user_data=user_data,
+                        contract_id=int(contract_id),
+                        updates=updates
+                    )
+
+            elif choice == "23":
+                if user_data["department"] != "SALES":
+                    print("Invalid option. Please try again.")
+                    continue
+                contracts = contract_ctrl.list_all_contracts(
+                    user_data=user_data
+                ) or []
+                unsigned = [
+                    contract for contract in contracts
+                    if not contract.is_signed
+                ]
+                contract_view.display_contracts(unsigned)
+
+            elif choice == "24":
+                if user_data["department"] != "SALES":
+                    print("Invalid option. Please try again.")
+                    continue
+                contracts = contract_ctrl.list_all_contracts(
+                    user_data=user_data
+                ) or []
+                unpaid = [
+                    contract for contract in contracts
+                    if contract.amount_due > 0
+                ]
+                contract_view.display_contracts(unpaid)
+
+            elif choice == "25":
+                if user_data["department"] != "SALES":
+                    print("Invalid option. Please try again.")
+                    continue
+                details = event_view.ask_event_details()
+                event_ctrl.create_event(
+                    user_data=user_data,
+                    event_data=details
+                )
+
+            elif choice == "30":
+                if user_data["department"] != "SUPPORT":
+                    print("Invalid option. Please try again.")
+                    continue
+                events = event_ctrl.list_all_events(
+                    user_data=user_data
+                ) or []
+                my_events = [
+                    event for event in events
+                    if event.support_contact_id == user_data["id"]
+                ]
+                event_view.display_events(my_events)
+
+            elif choice == "31":
+                if user_data["department"] != "SUPPORT":
+                    print("Invalid option. Please try again.")
+                    continue
+                event_id = event_view.ask_input(
+                    "Enter Event ID to update"
+                )
+                if event_id.isdigit():
+                    updates = event_view.ask_event_update_details()
+                    event_ctrl.update_event(
+                        user_data=user_data,
+                        event_id=int(event_id),
+                        updates=updates,
+                    )
+
             elif choice == "0":
                 auth_ctrl.logout()
                 print("Goodbye!")
                 break
+
             else:
                 print("Invalid option. Please try again.")
 
     except Exception as e:
-        # Catch and report any fatal application errors
         sentry_sdk.capture_exception(e)
         print(f"A fatal error occurred: {e}")
         raise e

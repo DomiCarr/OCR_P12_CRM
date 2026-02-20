@@ -1,4 +1,3 @@
-# app/views/event_view.py
 """
 View for Event related interactions.
 """
@@ -25,3 +24,37 @@ class EventView(BaseView):
                 f"From: {event.event_date_start} To: {event.event_date_end} | "
                 f"Support: {support}"
             )
+
+    def ask_event_details(self) -> dict:
+        """Prompt user for new event information."""
+        print("\n=== Add New Event ===")
+        return {
+            "name": self.ask_input("Event Name"),
+            "event_date_start": self.ask_input(
+                "Event Start (YYYY-MM-DD HH:MM:SS)"
+            ),
+            "event_date_end": self.ask_input(
+                "Event End (YYYY-MM-DD HH:MM:SS)"
+            ),
+            "location": self.ask_input("Location"),
+            "attendees": self.ask_input("Attendees"),
+            "notes": self.ask_input("Notes"),
+        }
+
+    def ask_event_update_details(self) -> dict:
+        """Prompt user for event update information."""
+        print("\n=== Update Event ===")
+        return {
+            "event_date_start": self.ask_input(
+                "Event Start (YYYY-MM-DD HH:MM:SS) [Leave empty to skip]"
+            ),
+            "event_date_end": self.ask_input(
+                "Event End (YYYY-MM-DD HH:MM:SS) [Leave empty to skip]"
+            ),
+            "location": self.ask_input("Location [Leave empty to skip]"),
+            "attendees": self.ask_input("Attendees [Leave empty to skip]"),
+            "notes": self.ask_input("Notes [Leave empty to skip]"),
+            "support_contact_id": self.ask_input(
+                "Support Contact ID [Leave empty to skip]"
+            ),
+        }

@@ -1,4 +1,3 @@
-# app/controllers/event_controller.py
 """
 Controller handling business logic for Event management.
 """
@@ -24,6 +23,25 @@ class EventController:
         if self.auth_controller.check_user_permission("read_event"):
             return self.repository.get_all_events()
         return None
+
+    @require_auth
+    def list_events_without_support(self, user_data: dict):
+        """List events that have no support contact assigned."""
+        self.auth_controller.current_user_data = user_data
+        if not self.auth_controller.check_user_permission("read_event"):
+            return None
+        return self.repository.get_events_without_support()
+
+    @require_auth
+    def list_my_events(self, user_data: dict):
+        """List events assigned to the current support user."""
+        self.auth_controller.current_user_data = user_data
+        if not self.auth_controller.check_user_permission("read_event"):
+            return None
+        support_id = user_data.get("id")
+        if support_id is None:
+            return None
+        return self.repository.get_my_events(support_id)
 
     @require_auth
     def create_event(self, user_data: dict, event_data: dict, contract):

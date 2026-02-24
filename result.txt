@@ -1,0 +1,3124 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.3, pytest-9.0.2, pluggy-1.6.0 -- /Users/carrasd/Develp/OCR/Projets/P12/CRM/env/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/carrasd/Develp/OCR/Projets/P12/CRM
+configfile: pytest.ini
+plugins: cov-7.0.0
+collecting ... collected 66 items
+
+tests/test_auth_utils.py::test_password_hashing PASSED                   [  1%]
+tests/test_auth_utils.py::test_password_verification_fail PASSED         [  3%]
+tests/test_auth_utils.py::test_token_lifecycle PASSED                    [  4%]
+tests/test_business_validation.py::test_contract_amounts_logic ERROR     [  6%]
+tests/test_business_validation.py::test_event_date_coherence ERROR       [  7%]
+tests/test_business_validation.py::test_attendees_positive ERROR         [  9%]
+tests/test_functional_auth.py::test_auth_controller_full_flow ERROR      [ 10%]
+tests/test_functional_auth.py::test_auth_login_success ERROR             [ 12%]
+tests/test_functional_management.py::test_list_employees_as_management ERROR [ 13%]
+tests/test_functional_management.py::test_create_employee_as_management ERROR [ 15%]
+tests/test_functional_management.py::test_create_employee_as_sales_denied ERROR [ 16%]
+tests/test_functional_management.py::test_list_contracts_permission ERROR [ 18%]
+tests/test_functional_permissions.py::test_management_can_create_employee ERROR [ 19%]
+tests/test_functional_permissions.py::test_sales_cannot_create_employee ERROR [ 21%]
+tests/test_functional_permissions.py::test_sales_can_create_client ERROR [ 22%]
+tests/test_functional_permissions.py::test_support_restrictions ERROR    [ 24%]
+tests/test_functional_sales.py::test_sales_can_create_client ERROR       [ 25%]
+tests/test_functional_sales.py::test_support_cannot_create_client ERROR  [ 27%]
+tests/test_functional_sales.py::test_sales_can_update_own_client ERROR   [ 28%]
+tests/test_functional_sales.py::test_sales_cannot_update_other_client ERROR [ 30%]
+tests/test_functional_sales.py::test_management_can_create_contract ERROR [ 31%]
+tests/test_functional_sales.py::test_sales_can_sign_own_contract ERROR   [ 33%]
+tests/test_functional_sales.py::test_sales_can_create_event_for_signed_contract ERROR [ 34%]
+tests/test_functional_sales.py::test_sales_cannot_create_event_for_unsigned_contract ERROR [ 36%]
+tests/test_functional_sales.py::test_support_can_update_assigned_event ERROR [ 37%]
+tests/test_functional_sales.py::test_sales_list_unsigned_contracts_filtered_by_owner ERROR [ 39%]
+tests/test_functional_sales.py::test_sales_list_unpaid_contracts_filtered_by_owner 
+
+==================================== ERRORS ====================================
+________________ ERROR at setup of test_contract_amounts_logic _________________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+_________________ ERROR at setup of test_event_date_coherence __________________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+__________________ ERROR at setup of test_attendees_positive ___________________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+_______________ ERROR at setup of test_auth_controller_full_flow _______________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+__________________ ERROR at setup of test_auth_login_success ___________________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+_____________ ERROR at setup of test_list_employees_as_management ______________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+_____________ ERROR at setup of test_create_employee_as_management _____________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+____________ ERROR at setup of test_create_employee_as_sales_denied ____________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+_______________ ERROR at setup of test_list_contracts_permission _______________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+____________ ERROR at setup of test_management_can_create_employee _____________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+_____________ ERROR at setup of test_sales_cannot_create_employee ______________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+________________ ERROR at setup of test_sales_can_create_client ________________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+_________________ ERROR at setup of test_support_restrictions __________________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+________________ ERROR at setup of test_sales_can_create_client ________________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+_____________ ERROR at setup of test_support_cannot_create_client ______________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+______________ ERROR at setup of test_sales_can_update_own_client ______________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+___________ ERROR at setup of test_sales_cannot_update_other_client ____________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+____________ ERROR at setup of test_management_can_create_contract _____________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+______________ ERROR at setup of test_sales_can_sign_own_contract ______________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+______ ERROR at setup of test_sales_can_create_event_for_signed_contract _______
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+____ ERROR at setup of test_sales_cannot_create_event_for_unsigned_contract ____
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+___________ ERROR at setup of test_support_can_update_assigned_event ___________
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+____ ERROR at setup of test_sales_list_unsigned_contracts_filtered_by_owner ____
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:354: in _open_connection
+    self._cmysql.connect(**cnx_kwargs)
+E   _mysql_connector.MySQLInterfaceError: Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   mysql.connector.errors.ProgrammingError: 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+
+The above exception was the direct cause of the following exception:
+tests/conftest.py:38: in db_engine
+    Base.metadata.drop_all(engine)
+env/lib/python3.13/site-packages/sqlalchemy/sql/schema.py:5956: in drop_all
+    bind._run_ddl_visitor(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3259: in _run_ddl_visitor
+    with self.begin() as conn:
+         ^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py:141: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3249: in begin
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3285: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:145: in __init__
+    Connection._handle_dbapi_exception_noconnection(
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:2448: in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:143: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/base.py:3309: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:447: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:1264: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:711: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:177: in _do_get
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/impl.py:175: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:388: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:673: in __init__
+    self.__connect()
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:899: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py:224: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+env/lib/python3.13/site-packages/sqlalchemy/pool/base.py:895: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/create.py:661: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/sqlalchemy/engine/default.py:630: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/pooling.py:322: in connect
+    return CMySQLConnection(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:142: in __init__
+    self.connect(**kwargs)
+env/lib/python3.13/site-packages/mysql/connector/abstracts.py:1604: in connect
+    self._open_connection()
+env/lib/python3.13/site-packages/mysql/connector/connection_cext.py:360: in _open_connection
+    raise get_mysql_exception(
+E   sqlalchemy.exc.ProgrammingError: (mysql.connector.errors.ProgrammingError) 1045 (28000): Access denied for user 'crm_user'@'localhost' (using password: YES)
+E   (Background on this error at: https://sqlalche.me/e/20/f405)
+=========================== short test summary info ============================
+ERROR tests/test_business_validation.py::test_contract_amounts_logic - sqlalc...
+ERROR tests/test_business_validation.py::test_event_date_coherence - sqlalche...
+ERROR tests/test_business_validation.py::test_attendees_positive - sqlalchemy...
+ERROR tests/test_functional_auth.py::test_auth_controller_full_flow - sqlalch...
+ERROR tests/test_functional_auth.py::test_auth_login_success - sqlalchemy.exc...
+ERROR tests/test_functional_management.py::test_list_employees_as_management
+ERROR tests/test_functional_management.py::test_create_employee_as_management
+ERROR tests/test_functional_management.py::test_create_employee_as_sales_denied
+ERROR tests/test_functional_management.py::test_list_contracts_permission - s...
+ERROR tests/test_functional_permissions.py::test_management_can_create_employee
+ERROR tests/test_functional_permissions.py::test_sales_cannot_create_employee
+ERROR tests/test_functional_permissions.py::test_sales_can_create_client - sq...
+ERROR tests/test_functional_permissions.py::test_support_restrictions - sqlal...
+ERROR tests/test_functional_sales.py::test_sales_can_create_client - sqlalche...
+ERROR tests/test_functional_sales.py::test_support_cannot_create_client - sql...
+ERROR tests/test_functional_sales.py::test_sales_can_update_own_client - sqla...
+ERROR tests/test_functional_sales.py::test_sales_cannot_update_other_client
+ERROR tests/test_functional_sales.py::test_management_can_create_contract - s...
+ERROR tests/test_functional_sales.py::test_sales_can_sign_own_contract - sqla...
+ERROR tests/test_functional_sales.py::test_sales_can_create_event_for_signed_contract
+ERROR tests/test_functional_sales.py::test_sales_cannot_create_event_for_unsigned_contract
+ERROR tests/test_functional_sales.py::test_support_can_update_assigned_event
+ERROR tests/test_functional_sales.py::test_sales_list_unsigned_contracts_filtered_by_owner
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! KeyboardInterrupt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/ast.py:301: KeyboardInterrupt
+(to show a full traceback on KeyboardInterrupt use --full-trace)
+========================= 3 passed, 23 errors in 9.07s =========================

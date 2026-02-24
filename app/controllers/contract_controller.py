@@ -3,6 +3,7 @@
 Controller handling business logic for Contract management.
 """
 
+from app.models.client import Client
 from app.models.contract import Contract
 from app.repositories.contract_repository import ContractRepository
 from app.utils.decorators import require_auth
@@ -26,12 +27,56 @@ class ContractController:
         return None
 
     @require_auth
+    def list_unsigned_contracts(self, user_data: dict):
+        """List unsigned contracts, optionally filtered for sales ownership."""
+        self.auth_controller.current_user_data = user_data
+        if not self.auth_controller.check_user_permission("read_contract"):
+            return None
+
+        contracts = self.repository.get_unsigned_contracts()
+        if user_data.get("department") == "SALES":
+            return [
+                c for c in contracts
+                if c.sales_contact_id == user_data.get("id")
+            ]
+        return contracts
+
+    @require_auth
+    def list_unpaid_contracts(self, user_data: dict):
+        """List unpaid contracts, optionally filtered for sales ownership."""
+        self.auth_controller.current_user_data = user_data
+        if not self.auth_controller.check_user_permission("read_contract"):
+            return None
+
+        contracts = self.repository.get_unpaid_contracts()
+        if user_data.get("department") == "SALES":
+            return [
+                c for c in contracts
+                if c.sales_contact_id == user_data.get("id")
+            ]
+        return contracts
+
+    @require_auth
     def create_contract(self, user_data: dict, contract_data: dict):
         """Create a new contract for a client."""
         self.auth_controller.current_user_data = user_data
         if self.auth_controller.check_user_permission("create_contract"):
             if "sales_contact_id" not in contract_data:
-                contract_data["sales_contact_id"] = user_data["id"]
+                client_id = contract_data.get("client_id")
+                if client_id is None:
+                    print("Client ID is required to create a contract.")
+                    return None
+
+                client = (
+                    self.repository.session.query(Client)
+                    .filter_by(id=client_id)
+                    .first()
+                )
+                if not client:
+                    print("Client not found.")
+                    return None
+
+                contract_data["sales_contact_id"] = client.sales_contact_id
 
             new_contract = Contract(**contract_data)
             created_contract = self.repository.add(new_contract)
@@ -56,7 +101,8 @@ class ContractController:
             print("Contract not found.")
             return None
 
-        # Logic: Sales can only update their own contracts. Management can update all.
+        # Logic: Sales can only update their own contracts. Management can
+        # update all.
         is_owner = contract.sales_contact_id == user_data["id"]
         is_management = user_data["department"] == "MANAGEMENT"
 

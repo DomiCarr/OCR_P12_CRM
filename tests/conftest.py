@@ -6,7 +6,6 @@ Initializes Sentry for error tracking during tests.
 """
 
 import os
-from dotenv import load_dotenv
 import pytest
 import sentry_sdk
 from sqlalchemy import create_engine, text
@@ -15,7 +14,13 @@ from config.config import Config
 from app.models import Base
 from app.utils.token_storage import TOKEN_FILE
 
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+except ModuleNotFoundError:
+    load_dotenv = None
+
+if load_dotenv is not None:
+    load_dotenv()
 
 
 @pytest.fixture(scope="session", autouse=True)

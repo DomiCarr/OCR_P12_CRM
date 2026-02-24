@@ -10,7 +10,6 @@ import sentry_sdk
 PERMISSIONS = {
     'MANAGEMENT': [
         'read_client',
-        'create_client',
         'update_client',
         'read_contract',
         'create_contract',

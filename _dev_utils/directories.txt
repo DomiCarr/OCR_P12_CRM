@@ -1,11 +1,19 @@
-Generated 2026-02-19 13:34:41
+Generated 2026-02-24 08:18:30
 
 Listing all files and folders (excluding env/, __pycache__, .git/, and _dev_utils/):
 
 .DS_Store
+.coverage
 .env
 .gitignore
-.token
+.pytest_cache
+    .pytest_cache/.gitignore
+    .pytest_cache/CACHEDIR.TAG
+    .pytest_cache/README.md
+    .pytest_cache/v
+        .pytest_cache/v/cache
+            .pytest_cache/v/cache/lastfailed
+            .pytest_cache/v/cache/nodeids
 README.md
 app
     app/.DS_Store
@@ -28,6 +36,7 @@ app
         app/repositories/base_repository.py
         app/repositories/client_repository.py
         app/repositories/contract_repository.py
+        app/repositories/department_repository.py
         app/repositories/employee_repository.py
         app/repositories/event_repository.py
     app/static
@@ -49,10 +58,32 @@ app
 check_auth.py
 config
     config/config.py
+epic_events_schema.sql
 init_db.py
 main.py
 pytest.ini
+requirements
 requirements.txt
+result.txt
 tests
     tests/__init__.py
     tests/conftest.py
+    tests/test_auth_controller_session_restore.py
+    tests/test_auth_utils.py
+    tests/test_business_validation.py
+    tests/test_controllers_more_more_coverage.py
+    tests/test_controllers_negative_paths.py
+    tests/test_functional_auth.py
+    tests/test_functional_management.py
+    tests/test_functional_permissions.py
+    tests/test_functional_sales.py
+    tests/test_integration_business_repos.py
+    tests/test_integration_staff_repos.py
+    tests/test_jwt_handler.py
+    tests/test_logic_filters.py
+    tests/test_models_business.py
+    tests/test_models_staff.py
+    tests/test_permissions.py
+    tests/test_repositories.py
+    tests/test_repository_and_decorators_coverage.py
+    tests/test_robustness_edge_cases.py

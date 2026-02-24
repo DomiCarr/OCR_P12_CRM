@@ -1,4 +1,3 @@
-# tests/test_functional_sales.py
 """
 Functional tests for Sales (T13) operations.
 
@@ -16,6 +15,10 @@ List of tests:
   (6.12).
 - test_support_can_update_assigned_event: Verify support can update their event
   (6.13).
+- test_sales_list_unsigned_contracts_filtered_by_owner: Verify sales sees only
+  their unsigned contracts.
+- test_sales_list_unpaid_contracts_filtered_by_owner: Verify sales sees only
+  their unpaid contracts.
 """
 
 import uuid
@@ -363,3 +366,105 @@ def test_support_can_update_assigned_event(sales_suite):
 
     assert updated is not None
     assert updated.notes == "Updated notes"
+
+
+def test_sales_list_unsigned_contracts_filtered_by_owner(sales_suite):
+    """Verify sales sees only their unsigned contracts."""
+    client_ctrl = sales_suite["client_ctrl"]
+    contract_ctrl = sales_suite["contract_ctrl"]
+    s1 = sales_suite["sales_1"]
+    s2 = sales_suite["sales_2"]
+
+    s1_user = {"id": s1.id, "department": "SALES"}
+    s2_user = {"id": s2.id, "department": "SALES"}
+
+    s1_client = client_ctrl.create_client(
+        user_data=s1_user,
+        client_data={
+            "full_name": "Unsigned S1 Client",
+            "email": f"u1_{uuid.uuid4().hex[:6]}@c.com",
+            "phone": "01",
+            "company_name": "U1 Corp",
+        },
+    )
+    s2_client = client_ctrl.create_client(
+        user_data=s2_user,
+        client_data={
+            "full_name": "Unsigned S2 Client",
+            "email": f"u2_{uuid.uuid4().hex[:6]}@c.com",
+            "phone": "02",
+            "company_name": "U2 Corp",
+        },
+    )
+
+    s1_contract = contract_ctrl.repository.add(Contract(
+        total_amount=100,
+        remaining_amount=100,
+        is_signed=False,
+        client_id=s1_client.id,
+        sales_contact_id=s1.id,
+    ))
+    contract_ctrl.repository.add(Contract(
+        total_amount=200,
+        remaining_amount=200,
+        is_signed=False,
+        client_id=s2_client.id,
+        sales_contact_id=s2.id,
+    ))
+
+    results = contract_ctrl.list_unsigned_contracts(user_data=s1_user) or []
+    result_ids = {c.id for c in results}
+
+    assert s1_contract.id in result_ids
+    assert all(c.sales_contact_id == s1.id for c in results)
+
+
+def test_sales_list_unpaid_contracts_filtered_by_owner(sales_suite):
+    """Verify sales sees only their unpaid contracts."""
+    client_ctrl = sales_suite["client_ctrl"]
+    contract_ctrl = sales_suite["contract_ctrl"]
+    s1 = sales_suite["sales_1"]
+    s2 = sales_suite["sales_2"]
+
+    s1_user = {"id": s1.id, "department": "SALES"}
+    s2_user = {"id": s2.id, "department": "SALES"}
+
+    s1_client = client_ctrl.create_client(
+        user_data=s1_user,
+        client_data={
+            "full_name": "Unpaid S1 Client",
+            "email": f"p1_{uuid.uuid4().hex[:6]}@c.com",
+            "phone": "03",
+            "company_name": "P1 Corp",
+        },
+    )
+    s2_client = client_ctrl.create_client(
+        user_data=s2_user,
+        client_data={
+            "full_name": "Unpaid S2 Client",
+            "email": f"p2_{uuid.uuid4().hex[:6]}@c.com",
+            "phone": "04",
+            "company_name": "P2 Corp",
+        },
+    )
+
+    s1_contract = contract_ctrl.repository.add(Contract(
+        total_amount=300,
+        remaining_amount=50,
+        is_signed=True,
+        client_id=s1_client.id,
+        sales_contact_id=s1.id,
+    ))
+    contract_ctrl.repository.add(Contract(
+        total_amount=400,
+        remaining_amount=10,
+        is_signed=True,
+        client_id=s2_client.id,
+        sales_contact_id=s2.id,
+    ))
+
+    results = contract_ctrl.list_unpaid_contracts(user_data=s1_user) or []
+    result_ids = {c.id for c in results}
+
+    assert s1_contract.id in result_ids
+    assert all(c.sales_contact_id == s1.id for c in results)

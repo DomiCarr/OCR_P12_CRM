@@ -1,4 +1,4 @@
-Generated 2026-02-20 20:28:44
+Generated 2026-02-24 06:41:04
 
 ===============================================================================
     ./.pytest_cache/README.md
@@ -234,6 +234,7 @@ class ClientController:
 Controller handling business logic for Contract management.
 """
 
+from app.models.client import Client
 from app.models.contract import Contract
 from app.repositories.contract_repository import ContractRepository
 from app.utils.decorators import require_auth
@@ -257,12 +258,56 @@ class ContractController:
         return None
 
     @require_auth
+    def list_unsigned_contracts(self, user_data: dict):
+        """List unsigned contracts, optionally filtered for sales ownership."""
+        self.auth_controller.current_user_data = user_data
+        if not self.auth_controller.check_user_permission("read_contract"):
+            return None
+
+        contracts = self.repository.get_unsigned_contracts()
+        if user_data.get("department") == "SALES":
+            return [
+                c for c in contracts
+                if c.sales_contact_id == user_data.get("id")
+            ]
+        return contracts
+
+    @require_auth
+    def list_unpaid_contracts(self, user_data: dict):
+        """List unpaid contracts, optionally filtered for sales ownership."""
+        self.auth_controller.current_user_data = user_data
+        if not self.auth_controller.check_user_permission("read_contract"):
+            return None
+
+        contracts = self.repository.get_unpaid_contracts()
+        if user_data.get("department") == "SALES":
+            return [
+                c for c in contracts
+                if c.sales_contact_id == user_data.get("id")
+            ]
+        return contracts
+
+    @require_auth
     def create_contract(self, user_data: dict, contract_data: dict):
         """Create a new contract for a client."""
         self.auth_controller.current_user_data = user_data
         if self.auth_controller.check_user_permission("create_contract"):
             if "sales_contact_id" not in contract_data:
-                contract_data["sales_contact_id"] = user_data["id"]
+                client_id = contract_data.get("client_id")
+                if client_id is None:
+                    print("Client ID is required to create a contract.")
+                    return None
+
+                client = (
+                    self.repository.session.query(Client)
+                    .filter_by(id=client_id)
+                    .first()
+                )
+                if not client:
+                    print("Client not found.")
+                    return None
+
+                contract_data["sales_contact_id"] = client.sales_contact_id
 
             new_contract = Contract(**contract_data)
             created_contract = self.repository.add(new_contract)
@@ -287,7 +332,8 @@ class ContractController:
             print("Contract not found.")
             return None
 
-        # Logic: Sales can only update their own contracts. Management can update all.
+        # Logic: Sales can only update their own contracts. Management can
+        # update all.
         is_owner = contract.sales_contact_id == user_data["id"]
         is_management = user_data["department"] == "MANAGEMENT"
 
@@ -372,7 +418,6 @@ class EmployeeController:
 ===============================================================================
     ./app/controllers/event_controller.py
 ===============================================================================
-# app/controllers/event_controller.py
 """
 Controller handling business logic for Event management.
 """
@@ -398,6 +443,25 @@ class EventController:
         if self.auth_controller.check_user_permission("read_event"):
             return self.repository.get_all_events()
         return None
+
+    @require_auth
+    def list_events_without_support(self, user_data: dict):
+        """List events that have no support contact assigned."""
+        self.auth_controller.current_user_data = user_data
+        if not self.auth_controller.check_user_permission("read_event"):
+            return None
+        return self.repository.get_events_without_support()
+
+    @require_auth
+    def list_my_events(self, user_data: dict):
+        """List events assigned to the current support user."""
+        self.auth_controller.current_user_data = user_data
+        if not self.auth_controller.check_user_permission("read_event"):
+            return None
+        support_id = user_data.get("id")
+        if support_id is None:
+            return None
+        return self.repository.get_my_events(support_id)
 
     @require_auth
     def create_event(self, user_data: dict, event_data: dict, contract):
@@ -1287,7 +1351,6 @@ import sentry_sdk
 PERMISSIONS = {
     'MANAGEMENT': [
         'read_client',
-        'create_client',
         'update_client',
         'read_contract',
         'create_contract',
@@ -1464,7 +1527,6 @@ class BaseView:
 ===============================================================================
     ./app/views/client_view.py
 ===============================================================================
-# app/views/client_view.py
 """
 View for Client related interactions.
 """
@@ -1501,10 +1563,23 @@ class ClientView(BaseView):
             )
         }
 
+    def ask_client_update_details(self) -> dict:
+        """Prompt user for client update information."""
+        print("\n=== Update Client ===")
+        return {
+            "full_name": self.ask_input("Full Name [Leave empty to skip]"),
+            "email": self.ask_input("Email [Leave empty to skip]"),
+            "phone": self.ask_input("Phone [Leave empty to skip]"),
+            "company_name": self.ask_input("Company Name [Leave empty to skip]"),
+            "last_contact": self.ask_input(
+                "Last Contact Date (YYYY-MM-DD HH:MM:SS) "
+                "[Leave empty to skip]"
+            ),
+        }
+
 ===============================================================================
     ./app/views/contract_view.py
 ===============================================================================
-# app/views/contract_view.py
 """
 View for Contract related interactions.
 """
@@ -1527,6 +1602,27 @@ class ContractView(BaseView):
                 f"Sales Contact: {contract.sales_contact.full_name} | "
                 f"Total: {contract.total_amount} | Status: {status}"
             )
+
+    def ask_contract_details(self) -> dict:
+        """Prompt user for new contract information."""
+        print("\n=== Add New Contract ===")
+        return {
+            "client_id": self.ask_input("Client ID"),
+            "total_amount": self.ask_input("Total Amount"),
+            "remaining_amount": self.ask_input("Remaining Amount"),
+            "is_signed": self.ask_input("Is Signed (y/n) [Leave empty for n]"),
+        }
+
+    def ask_contract_update_details(self) -> dict:
+        """Prompt user for contract update information."""
+        print("\n=== Update Contract ===")
+        return {
+            "total_amount": self.ask_input("Total Amount [Leave empty to skip]"),
+            "remaining_amount": self.ask_input(
+                "Remaining Amount [Leave empty to skip]"
+            ),
+            "is_signed": self.ask_input("Is Signed (y/n) [Leave empty to skip]"),
+        }
 
 ===============================================================================
     ./app/views/employee_view.py
@@ -1604,7 +1700,6 @@ class EmployeeView(BaseView):
 ===============================================================================
     ./app/views/event_view.py
 ===============================================================================
-# app/views/event_view.py
 """
 View for Event related interactions.
 """
@@ -1631,6 +1726,40 @@ class EventView(BaseView):
                 f"From: {event.event_date_start} To: {event.event_date_end} | "
                 f"Support: {support}"
             )
+
+    def ask_event_details(self) -> dict:
+        """Prompt user for new event information."""
+        print("\n=== Add New Event ===")
+        return {
+            "name": self.ask_input("Event Name"),
+            "event_date_start": self.ask_input(
+                "Event Start (YYYY-MM-DD HH:MM:SS)"
+            ),
+            "event_date_end": self.ask_input(
+                "Event End (YYYY-MM-DD HH:MM:SS)"
+            ),
+            "location": self.ask_input("Location"),
+            "attendees": self.ask_input("Attendees"),
+            "notes": self.ask_input("Notes"),
+        }
+
+    def ask_event_update_details(self) -> dict:
+        """Prompt user for event update information."""
+        print("\n=== Update Event ===")
+        return {
+            "event_date_start": self.ask_input(
+                "Event Start (YYYY-MM-DD HH:MM:SS) [Leave empty to skip]"
+            ),
+            "event_date_end": self.ask_input(
+                "Event End (YYYY-MM-DD HH:MM:SS) [Leave empty to skip]"
+            ),
+            "location": self.ask_input("Location [Leave empty to skip]"),
+            "attendees": self.ask_input("Attendees [Leave empty to skip]"),
+            "notes": self.ask_input("Notes [Leave empty to skip]"),
+            "support_contact_id": self.ask_input(
+                "Support Contact ID [Leave empty to skip]"
+            ),
+        }
 
 ===============================================================================
     ./app/views/main_menu_view.py
@@ -1757,7 +1886,6 @@ if __name__ == "__main__":
 ===============================================================================
     ./main.py
 ===============================================================================
-# main.py
 """
 Entry point for the Epic Events CRM application.
 Manages the main loop and coordinate between controllers and views.
@@ -1831,6 +1959,7 @@ def main():
         user_data = auth_ctrl.get_logged_in_user()
         if not user_data:
             email, password = auth_view.ask_login_details()
+            # Capture user_data directly from login()
             user_data = auth_ctrl.login(email, password)
             if not user_data:
                 auth_view.display_login_failure()
@@ -1845,34 +1974,29 @@ def main():
             choice = menu_view.ask_menu_option()
 
             if choice == "1":
+                # Pass user_data to satisfy the @require_auth decorator
                 data = client_ctrl.list_all_clients(user_data=user_data)
                 client_view.display_clients(data)
-
             elif choice == "2":
+                # Pass user_data to satisfy the @require_auth decorator
                 data = contract_ctrl.list_all_contracts(user_data=user_data)
                 contract_view.display_contracts(data)
-
             elif choice == "3":
+                # Pass user_data to satisfy the @require_auth decorator
                 data = event_ctrl.list_all_events(user_data=user_data)
                 event_view.display_events(data)
-
             elif choice == "4":
                 if user_data["department"] != "MANAGEMENT":
                     print("Invalid option. Please try again.")
                     continue
                 data = emp_ctrl.list_all_employees(user_data=user_data)
                 emp_view.display_employees(data)
-
             elif choice == "5":
                 if user_data["department"] != "MANAGEMENT":
                     print("Invalid option. Please try again.")
                     continue
                 details = emp_view.ask_employee_details()
-                emp_ctrl.create_employee(
-                    user_data=user_data,
-                    employee_data=details
-                )
-
+                emp_ctrl.create_employee(user_data=user_data, employee_data=details)
             elif choice == "6":
                 if user_data["department"] != "MANAGEMENT":
                     print("Invalid option. Please try again.")
@@ -1885,63 +2009,103 @@ def main():
                         emp_id=int(emp_id),
                         update_data=updates
                     )
-
             elif choice == "7":
                 if user_data["department"] != "MANAGEMENT":
                     print("Invalid option. Please try again.")
                     continue
-                details = contract_view.ask_contract_details()
+
+                contract_data = contract_view.ask_contract_details()
+
+                client_id_raw = str(contract_data.get("client_id", "")).strip()
+                if not client_id_raw.isdigit():
+                    continue
+                client = client_ctrl.repository.get_by_id(int(client_id_raw))
+                if not client:
+                    print("Client not found.")
+                    continue
+
+                try:
+                    total_amount = float(str(contract_data["total_amount"]).strip())
+                    remaining_amount = float(
+                        str(contract_data["remaining_amount"]).strip()
+                    )
+                except (KeyError, ValueError, TypeError):
+                    continue
+
+                is_signed_raw = str(contract_data.get("is_signed", "")).strip()
+                is_signed = is_signed_raw.lower() in ["y", "yes"]
+
+                payload = {
+                    "client_id": client.id,
+                    "sales_contact_id": client.sales_contact_id,
+                    "total_amount": total_amount,
+                    "remaining_amount": remaining_amount,
+                    "is_signed": is_signed,
+                }
                 contract_ctrl.create_contract(
                     user_data=user_data,
-                    contract_data=details
+                    contract_data=payload,
                 )
-
             elif choice == "8":
                 if user_data["department"] != "MANAGEMENT":
                     print("Invalid option. Please try again.")
                     continue
-                contract_id = contract_view.ask_input(
-                    "Enter Contract ID to update"
-                )
-                if contract_id.isdigit():
-                    updates = contract_view.ask_contract_update_details()
+
+                contract_id = contract_view.ask_input("Enter Contract ID")
+                if not contract_id.isdigit():
+                    continue
+
+                raw = contract_view.ask_contract_update_details()
+                updates = {}
+
+                total_amount_raw = str(raw.get("total_amount", "")).strip()
+                if total_amount_raw:
+                    try:
+                        updates["total_amount"] = float(total_amount_raw)
+                    except ValueError:
+                        updates.pop("total_amount", None)
+
+                remaining_raw = str(raw.get("remaining_amount", "")).strip()
+                if remaining_raw:
+                    try:
+                        updates["remaining_amount"] = float(remaining_raw)
+                    except ValueError:
+                        updates.pop("remaining_amount", None)
+
+                is_signed_raw = str(raw.get("is_signed", "")).strip().lower()
+                if is_signed_raw in ["y", "yes"]:
+                    updates["is_signed"] = True
+                elif is_signed_raw in ["n", "no"]:
+                    updates["is_signed"] = False
+
+                if updates:
                     contract_ctrl.update_contract(
                         user_data=user_data,
                         contract_id=int(contract_id),
-                        updates=updates
+                        updates=updates,
                     )
-
             elif choice == "9":
                 if user_data["department"] != "MANAGEMENT":
                     print("Invalid option. Please try again.")
                     continue
-                event_id = event_view.ask_input(
-                    "Enter Event ID to assign support"
+                event_id = event_view.ask_input("Enter Event ID")
+                support_id = event_view.ask_input("Enter Support Employee ID")
+                if not event_id.isdigit() or not support_id.isdigit():
+                    continue
+                updates = {"support_contact_id": int(support_id)}
+                event_ctrl.update_event(
+                    user_data=user_data,
+                    event_id=int(event_id),
+                    updates=updates,
                 )
-                support_id = event_view.ask_input(
-                    "Enter Support Employee ID"
-                )
-                if event_id.isdigit() and support_id.isdigit():
-                    updates = {"support_contact_id": int(support_id)}
-                    event_ctrl.update_event(
-                        user_data=user_data,
-                        event_id=int(event_id),
-                        updates=updates
-                    )
-
             elif choice == "10":
                 if user_data["department"] != "MANAGEMENT":
                     print("Invalid option. Please try again.")
                     continue
-                events = event_ctrl.list_all_events(
+                events = event_ctrl.list_events_without_support(
                     user_data=user_data
                 ) or []
-                no_support = [
-                    event for event in events
-                    if not event.support_contact_id
-                ]
-                event_view.display_events(no_support)
-
+                event_view.display_events(events)
             elif choice == "20":
                 if user_data["department"] != "SALES":
                     print("Invalid option. Please try again.")
@@ -1958,114 +2122,198 @@ def main():
                         )
                     except ValueError:
                         details.pop("last_contact", None)
-                client_ctrl.create_client(
-                    user_data=user_data,
-                    client_data=details
-                )
-
+                client_ctrl.create_client(user_data=user_data, client_data=details)
             elif choice == "21":
                 if user_data["department"] != "SALES":
                     print("Invalid option. Please try again.")
                     continue
-                client_id = client_view.ask_input(
-                    "Enter Client ID to update"
-                )
-                if client_id.isdigit():
-                    updates = client_view.ask_update_details()
+
+                client_id = client_view.ask_input("Enter Client ID to update")
+                if not client_id.isdigit():
+                    continue
+
+                raw = client_view.ask_client_update_details()
+                updates = {}
+
+                full_name = str(raw.get("full_name", "")).strip()
+                email = str(raw.get("email", "")).strip()
+                phone = str(raw.get("phone", "")).strip()
+                company_name = str(raw.get("company_name", "")).strip()
+
+                if full_name:
+                    updates["full_name"] = full_name
+                if email:
+                    updates["email"] = email
+                if phone:
+                    updates["phone"] = phone
+                if company_name:
+                    updates["company_name"] = company_name
+
+                last_contact = str(raw.get("last_contact", "")).strip()
+                if last_contact:
+                    try:
+                        updates["last_contact"] = datetime.strptime(
+                            last_contact,
+                            "%Y-%m-%d %H:%M:%S",
+                        )
+                    except ValueError:
+                        updates.pop("last_contact", None)
+
+                if updates:
                     client_ctrl.update_client(
                         user_data=user_data,
                         client_id=int(client_id),
-                        updates=updates
+                        updates=updates,
                     )
-
             elif choice == "22":
                 if user_data["department"] != "SALES":
                     print("Invalid option. Please try again.")
                     continue
-                contract_id = contract_view.ask_input(
-                    "Enter Contract ID to update"
-                )
-                if contract_id.isdigit():
-                    updates = contract_view.ask_contract_update_details()
+
+                contract_id = contract_view.ask_input("Enter Contract ID")
+                if not contract_id.isdigit():
+                    continue
+
+                raw = contract_view.ask_contract_update_details()
+                updates = {}
+
+                total_amount_raw = str(raw.get("total_amount", "")).strip()
+                if total_amount_raw:
+                    try:
+                        updates["total_amount"] = float(total_amount_raw)
+                    except ValueError:
+                        updates.pop("total_amount", None)
+
+                remaining_raw = str(raw.get("remaining_amount", "")).strip()
+                if remaining_raw:
+                    try:
+                        updates["remaining_amount"] = float(remaining_raw)
+                    except ValueError:
+                        updates.pop("remaining_amount", None)
+
+                is_signed_raw = str(raw.get("is_signed", "")).strip().lower()
+                if is_signed_raw in ["y", "yes"]:
+                    updates["is_signed"] = True
+                elif is_signed_raw in ["n", "no"]:
+                    updates["is_signed"] = False
+
+                if updates:
                     contract_ctrl.update_contract(
                         user_data=user_data,
                         contract_id=int(contract_id),
-                        updates=updates
+                        updates=updates,
                     )
-
             elif choice == "23":
                 if user_data["department"] != "SALES":
                     print("Invalid option. Please try again.")
                     continue
-                contracts = contract_ctrl.list_all_contracts(
+                contracts = contract_ctrl.list_unsigned_contracts(
                     user_data=user_data
                 ) or []
-                unsigned = [
-                    contract for contract in contracts
-                    if not contract.is_signed
-                ]
-                contract_view.display_contracts(unsigned)
-
+                contract_view.display_contracts(contracts)
             elif choice == "24":
                 if user_data["department"] != "SALES":
                     print("Invalid option. Please try again.")
                     continue
-                contracts = contract_ctrl.list_all_contracts(
+                contracts = contract_ctrl.list_unpaid_contracts(
                     user_data=user_data
                 ) or []
-                unpaid = [
-                    contract for contract in contracts
-                    if contract.amount_due > 0
-                ]
-                contract_view.display_contracts(unpaid)
-
+                contract_view.display_contracts(contracts)
             elif choice == "25":
                 if user_data["department"] != "SALES":
                     print("Invalid option. Please try again.")
                     continue
-                details = event_view.ask_event_details()
+
+                contract_id = event_view.ask_input("Enter Contract ID")
+                if not contract_id.isdigit():
+                    continue
+
+                contract = contract_ctrl.repository.get_by_id(int(contract_id))
+                if not contract:
+                    print("Contract not found.")
+                    continue
+
+                raw = event_view.ask_event_details()
+
+                start_raw = str(raw.get("event_date_start", "")).strip()
+                end_raw = str(raw.get("event_date_end", "")).strip()
+                try:
+                    start_dt = datetime.strptime(start_raw, "%Y-%m-%d %H:%M:%S")
+                    end_dt = datetime.strptime(end_raw, "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    continue
+
+                attendees_raw = str(raw.get("attendees", "")).strip()
+                try:
+                    attendees = int(attendees_raw)
+                except ValueError:
+                    continue
+
+                event_data = {
+                    "name": str(raw.get("name", "")).strip(),
+                    "event_date_start": start_dt,
+                    "event_date_end": end_dt,
+                    "location": str(raw.get("location", "")).strip(),
+                    "attendees": attendees,
+                    "notes": str(raw.get("notes", "")).strip(),
+                    "client_id": contract.client_id,
+                    "contract_id": contract.id,
+                    "support_contact_id": None,
+                }
                 event_ctrl.create_event(
                     user_data=user_data,
-                    event_data=details
+                    event_data=event_data,
+                    contract=contract,
                 )
-
             elif choice == "30":
                 if user_data["department"] != "SUPPORT":
                     print("Invalid option. Please try again.")
                     continue
-                events = event_ctrl.list_all_events(
-                    user_data=user_data
-                ) or []
-                my_events = [
-                    event for event in events
-                    if event.support_contact_id == user_data["id"]
-                ]
-                event_view.display_events(my_events)
-
+                events = event_ctrl.list_my_events(user_data=user_data) or []
+                event_view.display_events(events)
             elif choice == "31":
                 if user_data["department"] != "SUPPORT":
                     print("Invalid option. Please try again.")
                     continue
-                event_id = event_view.ask_input(
-                    "Enter Event ID to update"
-                )
-                if event_id.isdigit():
-                    updates = event_view.ask_event_update_details()
+                events = event_ctrl.list_my_events(user_data=user_data) or []
+                event_view.display_events(events)
+
+                event_id = event_view.ask_input("Enter Event ID to update")
+                if not event_id.isdigit():
+                    continue
+
+                raw = event_view.ask_event_update_details()
+                updates = {}
+
+                notes = str(raw.get("notes", "")).strip()
+                location = str(raw.get("location", "")).strip()
+                attendees_raw = str(raw.get("attendees", "")).strip()
+
+                if notes:
+                    updates["notes"] = notes
+                if location:
+                    updates["location"] = location
+                if attendees_raw:
+                    try:
+                        updates["attendees"] = int(attendees_raw)
+                    except ValueError:
+                        updates.pop("attendees", None)
+
+                if updates:
                     event_ctrl.update_event(
                         user_data=user_data,
                         event_id=int(event_id),
                         updates=updates,
                     )
-
             elif choice == "0":
                 auth_ctrl.logout()
                 print("Goodbye!")
                 break
-
             else:
                 print("Invalid option. Please try again.")
 
     except Exception as e:
+        # Catch and report any fatal application errors
         sentry_sdk.capture_exception(e)
         print(f"A fatal error occurred: {e}")
         raise e
@@ -2090,7 +2338,6 @@ Initializes Sentry for error tracking during tests.
 """
 
 import os
-from dotenv import load_dotenv
 import pytest
 import sentry_sdk
 from sqlalchemy import create_engine, text
@@ -2099,7 +2346,13 @@ from config.config import Config
 from app.models import Base
 from app.utils.token_storage import TOKEN_FILE
 
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+except ModuleNotFoundError:
+    load_dotenv = None
+
+if load_dotenv is not None:
+    load_dotenv()
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -2156,6 +2409,111 @@ def db_session(db_engine):
     session.close()
     connection.close()
 
+===============================================================================
+    ./tests/test_auth_controller_session_restore.py
+===============================================================================
+"""
+tests/test_auth_controller_session_restore.py
+
+Covers AuthController session restoration via token_storage + jwt_handler,
+and Sentry user scope restore/reset behavior.
+
+Non-regression: assertions match current implementation:
+- get_logged_in_user() sets Sentry user with {"id": str(id), "department": dept}
+  (no username restoration)
+"""
+
+import pytest
+from app.controllers.auth_controller import AuthController
+from app.repositories.employee_repository import EmployeeRepository
+
+
+@pytest.fixture
+def auth_ctrl(db_session):
+    """AuthController wired with a real repository (DB not used in these tests)."""
+    return AuthController(EmployeeRepository(db_session))
+
+
+def test_get_logged_in_user_no_token(monkeypatch, auth_ctrl):
+    """If no token exists, return None and do not touch current_user_data."""
+    from app.controllers import auth_controller as auth_mod
+
+    monkeypatch.setattr(auth_mod, "get_token", lambda: None)
+
+    out = auth_ctrl.get_logged_in_user()
+    assert out is None
+    assert auth_ctrl.current_user_data is None
+
+
+def test_get_logged_in_user_valid_token_restores_sentry(monkeypatch, auth_ctrl):
+    """
+    Valid token -> returns payload, sets current_user_data,
+    and restores Sentry user with id coerced to string.
+    """
+    from app.controllers import auth_controller as auth_mod
+
+    sentry = {"value": None}
+
+    def _fake_set_user(value):
+        sentry["value"] = value
+
+    monkeypatch.setattr(auth_mod, "get_token", lambda: "dummy.jwt.token")
+    monkeypatch.setattr(
+        auth_mod,
+        "decode_token",
+        lambda _t: {"id": 1, "department": "SALES"},
+    )
+    monkeypatch.setattr(auth_mod.sentry_sdk, "set_user", _fake_set_user)
+
+    payload = auth_ctrl.get_logged_in_user()
+    assert payload == {"id": 1, "department": "SALES"}
+    assert auth_ctrl.current_user_data == {"id": 1, "department": "SALES"}
+
+    # Non-regression: implementation sets string id and does not include username
+    assert sentry["value"] == {"id": "1", "department": "SALES"}
+
+
+def test_get_logged_in_user_invalid_token_deletes_token(monkeypatch, auth_ctrl):
+    """Invalid/expired token -> delete_token is called and None is returned."""
+    from app.controllers import auth_controller as auth_mod
+
+    deleted = {"called": False}
+
+    def _fake_delete():
+        deleted["called"] = True
+
+    monkeypatch.setattr(auth_mod, "get_token", lambda: "dummy.jwt.token")
+    monkeypatch.setattr(auth_mod, "decode_token", lambda _t: None)
+    monkeypatch.setattr(auth_mod, "delete_token", _fake_delete)
+
+    payload = auth_ctrl.get_logged_in_user()
+    assert payload is None
+    assert deleted["called"] is True
+
+
+def test_logout_clears_sentry_and_session(monkeypatch, auth_ctrl):
+    """logout() clears token, clears Sentry user, and resets current_user_data."""
+    from app.controllers import auth_controller as auth_mod
+
+    deleted = {"called": False}
+    sentry = {"value": "not-none"}
+
+    def _fake_delete():
+        deleted["called"] = True
+
+    def _fake_set_user(value):
+        sentry["value"] = value
+
+    auth_ctrl.current_user_data = {"id": 99, "department": "MANAGEMENT"}
+
+    monkeypatch.setattr(auth_mod, "delete_token", _fake_delete)
+    monkeypatch.setattr(auth_mod.sentry_sdk, "set_user", _fake_set_user)
+
+    auth_ctrl.logout()
+
+    assert deleted["called"] is True
+    assert sentry["value"] is None
+    assert auth_ctrl.current_user_data is None
 
 ===============================================================================
     ./tests/test_auth_utils.py
@@ -2316,43 +2674,646 @@ def test_attendees_positive(db_session, validation_setup):
     assert event.attendees < 0
 
 ===============================================================================
+    ./tests/test_controllers_more_more_coverage.py
+===============================================================================
+# tests/test_controllers_more_more_coverage.py
+"""
+Extra controller tests to push coverage further (happy-path + extra branches),
+without breaking non-regression.
+
+Important:
+- Fixtures are defined locally (pytest does NOT share fixtures across test files
+  unless they are in conftest.py).
+- Keep data compliant with DB constraints (e.g. Client.phone is NOT NULL).
+"""
+
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+import uuid
+
+import pytest
+
+from app.controllers.client_controller import ClientController
+from app.controllers.contract_controller import ContractController
+from app.controllers.employee_controller import EmployeeController
+from app.controllers.event_controller import EventController
+
+from app.models.client import Client
+from app.models.contract import Contract
+from app.models.department import Department
+from app.models.employee import Employee
+from app.models.event import Event
+
+from app.repositories.client_repository import ClientRepository
+from app.repositories.contract_repository import ContractRepository
+from app.repositories.employee_repository import EmployeeRepository
+from app.repositories.event_repository import EventRepository
+
+from app.utils.auth import verify_password
+
+
+class DummyAuthController:
+    """Minimal auth controller to drive controller permission branches."""
+
+    def __init__(self, allowed: set[str]):
+        self.allowed = allowed
+        self.current_user_data: dict | None = None
+
+    def check_user_permission(self, permission: str) -> bool:
+        return permission in self.allowed
+
+
+@pytest.fixture
+def seeded_staff(db_session):
+    """Create SALES / SUPPORT / MANAGEMENT employees."""
+    sales_dept = Department(name=f"SALES_{uuid.uuid4().hex[:6]}")
+    support_dept = Department(name=f"SUPPORT_{uuid.uuid4().hex[:6]}")
+    mgmt_dept = Department(name=f"MANAGEMENT_{uuid.uuid4().hex[:6]}")
+    db_session.add_all([sales_dept, support_dept, mgmt_dept])
+    db_session.flush()
+
+    sales = Employee(
+        full_name="Sales User",
+        email=f"sales_{uuid.uuid4().hex[:6]}@t.com",
+        password="pw",
+        employee_number=f"S{uuid.uuid4().hex[:6]}",
+        department_id=sales_dept.id,
+    )
+    support = Employee(
+        full_name="Support User",
+        email=f"support_{uuid.uuid4().hex[:6]}@t.com",
+        password="pw",
+        employee_number=f"U{uuid.uuid4().hex[:6]}",
+        department_id=support_dept.id,
+    )
+    mgmt = Employee(
+        full_name="Mgmt User",
+        email=f"mgmt_{uuid.uuid4().hex[:6]}@t.com",
+        password="pw",
+        employee_number=f"M{uuid.uuid4().hex[:6]}",
+        department_id=mgmt_dept.id,
+    )
+
+    db_session.add_all([sales, support, mgmt])
+    db_session.commit()
+
+    return {"sales": sales, "support": support, "mgmt": mgmt}
+
+
+@pytest.fixture
+def seeded_business(db_session, seeded_staff):
+    """Create a client + 2 contracts + 1 event for controller tests."""
+    staff = seeded_staff
+    sales = staff["sales"]
+    support = staff["support"]
+
+    client = Client(
+        full_name="Client Seed",
+        email=f"client_{uuid.uuid4().hex[:6]}@t.com",
+        phone="0102030405",
+        company_name="Corp",
+        sales_contact_id=sales.id,
+    )
+    db_session.add(client)
+    db_session.commit()
+
+    signed_contract = Contract(
+        total_amount=1000,
+        remaining_amount=100,
+        is_signed=True,
+        client_id=client.id,
+        sales_contact_id=sales.id,
+    )
+    unsigned_contract = Contract(
+        total_amount=500,
+        remaining_amount=500,
+        is_signed=False,
+        client_id=client.id,
+        sales_contact_id=sales.id,
+    )
+    db_session.add_all([signed_contract, unsigned_contract])
+    db_session.commit()
+
+    event = Event(
+        name="Event Seed",
+        event_date_start=datetime.now() + timedelta(days=1),
+        event_date_end=datetime.now() + timedelta(days=2),
+        location="Paris",
+        attendees=10,
+        notes="n",
+        client_id=client.id,
+        contract_id=signed_contract.id,
+        support_contact_id=support.id,
+    )
+    db_session.add(event)
+    db_session.commit()
+
+    return {
+        "client": client,
+        "signed_contract": signed_contract,
+        "unsigned_contract": unsigned_contract,
+        "event": event,
+    }
+
+
+def test_client_controller_list_all_clients_allowed_returns_clients(
+    db_session, seeded_business
+):
+    auth = DummyAuthController(allowed={"read_client"})
+    ctrl = ClientController(ClientRepository(db_session), auth)
+
+    out = ctrl.list_all_clients(user_data={"id": 1, "department": "SALES"})
+    assert isinstance(out, list)
+    assert len(out) >= 1
+
+
+def test_client_controller_create_success_sets_last_contact_and_prints(
+    db_session, seeded_staff, capsys
+):
+    auth = DummyAuthController(allowed={"create_client"})
+    ctrl = ClientController(ClientRepository(db_session), auth)
+
+    sales = seeded_staff["sales"]
+    created = ctrl.create_client(
+        user_data={"id": sales.id, "department": "SALES"},
+        client_data={
+            "full_name": "New Client",
+            "email": f"new_{uuid.uuid4().hex[:6]}@t.com",
+            "phone": "0600000000",
+            "company_name": "NewCorp",
+        },
+    )
+    captured = capsys.readouterr().out
+
+    assert created is not None
+    assert created.sales_contact_id == sales.id
+    assert created.last_contact is not None
+    assert "client" in captured.lower()
+    assert "created" in captured.lower()
+
+
+def test_client_controller_update_success_as_owner_prints(
+    db_session, seeded_business, capsys
+):
+    auth = DummyAuthController(allowed={"update_client"})
+    ctrl = ClientController(ClientRepository(db_session), auth)
+
+    client = seeded_business["client"]
+    updated = ctrl.update_client(
+        user_data={"id": client.sales_contact_id, "department": "SALES"},
+        client_id=client.id,
+        updates={"phone": "0999999999"},
+    )
+    captured = capsys.readouterr().out
+
+    assert updated is not None
+    assert updated.phone == "0999999999"
+    assert "updated" in captured.lower()
+
+
+def test_contract_controller_create_infers_sales_contact_from_client(
+    db_session, seeded_business, seeded_staff
+):
+    auth = DummyAuthController(allowed={"create_contract"})
+    ctrl = ContractController(ContractRepository(db_session), auth)
+
+    client = seeded_business["client"]
+    mgmt = seeded_staff["mgmt"]
+
+    contract = ctrl.create_contract(
+        user_data={"id": mgmt.id, "department": "MANAGEMENT"},
+        contract_data={
+            "total_amount": 2500,
+            "remaining_amount": 2500,
+            "is_signed": False,
+            "client_id": client.id,
+            # intentionally omit sales_contact_id to hit the "infer" branch
+        },
+    )
+
+    assert contract is not None
+    assert contract.client_id == client.id
+    assert contract.sales_contact_id == client.sales_contact_id
+
+
+def test_contract_controller_create_missing_client_id_returns_none(
+    db_session, seeded_staff
+):
+    auth = DummyAuthController(allowed={"create_contract"})
+    ctrl = ContractController(ContractRepository(db_session), auth)
+
+    mgmt = seeded_staff["mgmt"]
+    out = ctrl.create_contract(
+        user_data={"id": mgmt.id, "department": "MANAGEMENT"},
+        contract_data={"total_amount": 10, "remaining_amount": 10},
+    )
+    assert out is None
+
+
+def test_contract_controller_update_denied_when_not_owner_and_not_mgmt(
+    db_session, seeded_business, seeded_staff
+):
+    auth = DummyAuthController(allowed={"update_contract"})
+    ctrl = ContractController(ContractRepository(db_session), auth)
+
+    contract = seeded_business["signed_contract"]
+    other_sales = seeded_staff["support"]  # wrong user + wrong dept for ownership
+
+    out = ctrl.update_contract(
+        user_data={"id": other_sales.id, "department": "SUPPORT"},
+        contract_id=contract.id,
+        updates={"total_amount": 9999},
+    )
+    assert out is None
+
+
+def test_employee_controller_update_hashes_password(db_session, seeded_staff):
+    auth = DummyAuthController(allowed={"update_employee"})
+    ctrl = EmployeeController(EmployeeRepository(db_session), auth)
+
+    mgmt = seeded_staff["mgmt"]
+    target = seeded_staff["support"]
+
+    updated = ctrl.update_employee(
+        user_data={"id": mgmt.id, "department": "MANAGEMENT"},
+        emp_id=target.id,
+        update_data={"password": "new_password"},
+    )
+
+    assert updated is not None
+    assert updated.password != "new_password"
+    # check password not seen
+    assert updated.password != "new_password"
+
+    # check Argon2 format
+    assert updated.password.startswith("$argon2")
+
+
+def test_event_controller_update_denied_when_not_assigned_support(
+    db_session, seeded_business, seeded_staff, capsys
+):
+    auth = DummyAuthController(allowed={"update_event"})
+    ctrl = EventController(EventRepository(db_session), auth)
+
+    event = seeded_business["event"]
+    other_support = seeded_staff["mgmt"]  # not assigned, not SUPPORT, not MANAGEMENT?
+
+    out = ctrl.update_event(
+        user_data={"id": other_support.id, "department": "SALES"},
+        event_id=event.id,
+        updates={"notes": "hack"},
+    )
+    captured = capsys.readouterr().out
+
+    assert out is None
+    assert "access denied" in captured.lower() or "denied" in captured.lower()
+
+===============================================================================
+    ./tests/test_controllers_negative_paths.py
+===============================================================================
+# tests/test_controllers_negative_paths.py
+"""
+Extra controller tests to cover negative/early-return branches:
+- permission denied
+- not found
+- business rule denials (ownership, unsigned contract, support assignment)
+
+Goal: increase controller coverage without changing production code.
+"""
+
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+import uuid
+
+import pytest
+
+from app.controllers.client_controller import ClientController
+from app.controllers.contract_controller import ContractController
+from app.controllers.employee_controller import EmployeeController
+from app.controllers.event_controller import EventController
+
+from app.models.client import Client
+from app.models.contract import Contract
+from app.models.department import Department
+from app.models.employee import Employee
+from app.models.event import Event
+
+from app.repositories.base_repository import BaseRepository
+from app.repositories.client_repository import ClientRepository
+from app.repositories.contract_repository import ContractRepository
+from app.repositories.employee_repository import EmployeeRepository
+from app.repositories.event_repository import EventRepository
+
+
+class DummyAuthController:
+    """
+    Minimal auth controller stub.
+    Controllers only rely on:
+      - current_user_data attribute
+      - check_user_permission(action) -> bool
+    """
+
+    def __init__(self, allowed: set[str] | None = None):
+        self.allowed = allowed or set()
+        self.current_user_data = None
+
+    def check_user_permission(self, action: str) -> bool:
+        return action in self.allowed
+
+
+@pytest.fixture
+def seeded_staff(db_session):
+    """Create departments + a few employees to use in controller tests."""
+    dept_repo = BaseRepository(db_session, Department)
+
+    d_sales = dept_repo.add(Department(name=f"SALES_{uuid.uuid4().hex[:6]}"))
+    d_support = dept_repo.add(Department(name=f"SUPPORT_{uuid.uuid4().hex[:6]}"))
+    d_mgmt = dept_repo.add(Department(name=f"MANAGEMENT_{uuid.uuid4().hex[:6]}"))
+
+    sales = Employee(
+        full_name="Sales User",
+        email=f"sales_{uuid.uuid4().hex[:6]}@t.com",
+        password="hashed",
+        employee_number=f"S{uuid.uuid4().hex[:6]}",
+        department_id=d_sales.id,
+    )
+    support = Employee(
+        full_name="Support User",
+        email=f"support_{uuid.uuid4().hex[:6]}@t.com",
+        password="hashed",
+        employee_number=f"U{uuid.uuid4().hex[:6]}",
+        department_id=d_support.id,
+    )
+    mgmt = Employee(
+        full_name="Mgmt User",
+        email=f"mgmt_{uuid.uuid4().hex[:6]}@t.com",
+        password="hashed",
+        employee_number=f"M{uuid.uuid4().hex[:6]}",
+        department_id=d_mgmt.id,
+    )
+
+    db_session.add_all([sales, support, mgmt])
+    db_session.commit()
+
+    return {"sales": sales, "support": support, "mgmt": mgmt}
+
+
+@pytest.fixture
+def seeded_business(db_session, seeded_staff):
+    """Create a client + contracts + event to test controller rules."""
+    staff = seeded_staff
+    sales = staff["sales"]
+    support = staff["support"]
+
+    client = Client(
+        full_name="Client A",
+        email=f"client_{uuid.uuid4().hex[:6]}@t.com",
+        phone="0102030405",
+        company_name="Corp",
+        sales_contact_id=sales.id,
+    )
+    db_session.add(client)
+    db_session.commit()
+
+    signed_contract = Contract(
+        total_amount=1000,
+        remaining_amount=100,
+        is_signed=True,
+        client_id=client.id,
+        sales_contact_id=sales.id,
+    )
+    unsigned_contract = Contract(
+        total_amount=500,
+        remaining_amount=500,
+        is_signed=False,
+        client_id=client.id,
+        sales_contact_id=sales.id,
+    )
+    db_session.add_all([signed_contract, unsigned_contract])
+    db_session.commit()
+
+    event = Event(
+        name="Event A",
+        event_date_start=datetime.now() + timedelta(days=1),
+        event_date_end=datetime.now() + timedelta(days=2),
+        location="Paris",
+        attendees=10,
+        notes="n",
+        client_id=client.id,
+        contract_id=signed_contract.id,
+        support_contact_id=support.id,
+    )
+    db_session.add(event)
+    db_session.commit()
+
+    return {
+        "client": client,
+        "signed_contract": signed_contract,
+        "unsigned_contract": unsigned_contract,
+        "event": event,
+    }
+
+
+def test_client_controller_list_denied_returns_empty(db_session):
+    auth = DummyAuthController(allowed=set())
+    ctrl = ClientController(ClientRepository(db_session), auth)
+
+    out = ctrl.list_all_clients(user_data={"id": 1, "department": "SALES"})
+    assert out == []
+
+
+def test_client_controller_update_denied_returns_none(db_session, seeded_business):
+    auth = DummyAuthController(allowed=set())
+    ctrl = ClientController(ClientRepository(db_session), auth)
+
+    client = seeded_business["client"]
+    out = ctrl.update_client(
+        user_data={"id": client.sales_contact_id, "department": "SALES"},
+        client_id=client.id,
+        updates={"phone": "0999"},
+    )
+    assert out is None
+
+
+def test_client_controller_update_not_found_returns_none(db_session):
+    auth = DummyAuthController(allowed={"update_client"})
+    ctrl = ClientController(ClientRepository(db_session), auth)
+
+    out = ctrl.update_client(
+        user_data={"id": 1, "department": "SALES"},
+        client_id=999999,
+        updates={"phone": "0999"},
+    )
+    assert out is None
+
+
+def test_client_controller_update_denied_when_not_owner_and_not_mgmt(
+    db_session, seeded_staff, seeded_business
+):
+    auth = DummyAuthController(allowed={"update_client"})
+    ctrl = ClientController(ClientRepository(db_session), auth)
+
+    client = seeded_business["client"]
+    other_sales = seeded_staff["mgmt"]  # id differs from sales_contact_id
+    user = {"id": other_sales.id, "department": "SALES"}
+
+    out = ctrl.update_client(user_data=user, client_id=client.id, updates={"phone": "0999"})
+    assert out is None
+
+
+def test_contract_controller_create_denied_returns_none(db_session, seeded_business):
+    auth = DummyAuthController(allowed=set())
+    ctrl = ContractController(ContractRepository(db_session), auth)
+
+    client = seeded_business["client"]
+    out = ctrl.create_contract(
+        user_data={"id": client.sales_contact_id, "department": "SALES"},
+        contract_data={
+            "total_amount": 100,
+            "remaining_amount": 50,
+            "is_signed": False,
+            "client_id": client.id,
+            "sales_contact_id": client.sales_contact_id,
+        },
+    )
+    assert out is None
+
+
+def test_contract_controller_update_not_found_returns_none(db_session):
+    auth = DummyAuthController(allowed={"update_contract"})
+    ctrl = ContractController(ContractRepository(db_session), auth)
+
+    out = ctrl.update_contract(
+        user_data={"id": 1, "department": "SALES"},
+        contract_id=999999,
+        updates={"remaining_amount": 0},
+    )
+    assert out is None
+
+
+def test_employee_controller_create_denied_returns_none(db_session):
+    auth = DummyAuthController(allowed=set())
+    ctrl = EmployeeController(EmployeeRepository(db_session), auth)
+
+    out = ctrl.create_employee(
+        user_data={"id": 1, "department": "SALES"},
+        employee_data={
+            "full_name": "X",
+            "email": f"x_{uuid.uuid4().hex[:6]}@t.com",
+            "password": "pw",
+            "employee_number": f"E{uuid.uuid4().hex[:6]}",
+            "department_id": 1,
+        },
+    )
+    assert out is None
+
+
+def test_employee_controller_update_not_found_returns_none(db_session):
+    auth = DummyAuthController(allowed={"update_employee"})
+    ctrl = EmployeeController(EmployeeRepository(db_session), auth)
+
+    out = ctrl.update_employee(
+        user_data={"id": 1, "department": "MANAGEMENT"},
+        emp_id=999999,
+        update_data={"full_name": "New"},
+    )
+    assert out is None
+
+
+def test_event_controller_create_denied_when_not_owner(db_session, seeded_staff, seeded_business):
+    auth = DummyAuthController(allowed={"create_event"})
+    ctrl = EventController(EventRepository(db_session), auth)
+
+    contract = seeded_business["signed_contract"]
+    not_owner = seeded_staff["support"]
+
+    out = ctrl.create_event(
+        user_data={"id": not_owner.id, "department": "SUPPORT"},
+        event_data={
+            "name": "Denied Event",
+            "event_date_start": datetime.now() + timedelta(days=1),
+            "event_date_end": datetime.now() + timedelta(days=2),
+            "location": "Paris",
+            "attendees": 10,
+            "notes": "n",
+            "client_id": contract.client_id,
+            "contract_id": contract.id,
+        },
+        contract=contract,
+    )
+    assert out is None
+
+
+def test_event_controller_create_denied_when_contract_unsigned(db_session, seeded_staff, seeded_business):
+    auth = DummyAuthController(allowed={"create_event"})
+    ctrl = EventController(EventRepository(db_session), auth)
+
+    contract = seeded_business["unsigned_contract"]
+    owner = seeded_staff["sales"]
+
+    out = ctrl.create_event(
+        user_data={"id": owner.id, "department": "SALES"},
+        event_data={
+            "name": "Denied Unsigned",
+            "event_date_start": datetime.now() + timedelta(days=1),
+            "event_date_end": datetime.now() + timedelta(days=2),
+            "location": "Paris",
+            "attendees": 10,
+            "notes": "n",
+            "client_id": contract.client_id,
+            "contract_id": contract.id,
+        },
+        contract=contract,
+    )
+    assert out is None
+
+
+def test_event_controller_update_denied_when_not_assigned_and_not_mgmt(
+    db_session, seeded_staff, seeded_business
+):
+    auth = DummyAuthController(allowed={"update_event"})
+    ctrl = EventController(EventRepository(db_session), auth)
+
+    event = seeded_business["event"]
+    not_assigned = seeded_staff["sales"]  # event.support_contact_id is support
+
+    out = ctrl.update_event(
+        user_data={"id": not_assigned.id, "department": "SALES"},
+        event_id=event.id,
+        updates={"notes": "x"},
+    )
+    assert out is None
+
+
+def test_event_controller_update_not_found_returns_none(db_session):
+    auth = DummyAuthController(allowed={"update_event"})
+    ctrl = EventController(EventRepository(db_session), auth)
+
+    out = ctrl.update_event(
+        user_data={"id": 1, "department": "MANAGEMENT"},
+        event_id=999999,
+        updates={"notes": "x"},
+    )
+    assert out is None
+
+===============================================================================
     ./tests/test_functional_auth.py
 ===============================================================================
-# tests/test_robustness_edge_cases.py
 """
-Integration tests for edge cases, permission denials, and coverage optimization.
+Functional tests for authentication controller flows.
 
 List of tests:
 - test_auth_controller_full_flow: Covers logout and failed login logic.
-- test_auth_login_success: Covers successful login and session management.
-- test_client_controller_unauthorized: Covers permission denial branches.
-- test_contract_controller_ownership: Covers ownership and not found logic.
-- test_event_controller_complex_rules: Covers unsigned contracts and support.
-- test_controllers_list_methods: Covers list_all methods for all controllers.
-- test_employee_management_denials: Covers admin-only creation/update logic.
-- test_repository_integrity_failure: Covers DB constraints and rollbacks.
-- test_repository_delete_logic: Covers the delete method in BaseRepository.
-- test_repository_specialized_filters: Covers specific repository lookups.
-- test_models_string_representation: Covers __repr__ methods for all models.
+- test_auth_login_success: Covers successful login and user data structure.
 """
 
-from datetime import datetime
 import pytest
-from sqlalchemy.exc import IntegrityError
 from app.controllers.auth_controller import AuthController
-from app.controllers.client_controller import ClientController
-from app.controllers.contract_controller import ContractController
-from app.controllers.event_controller import EventController
-from app.controllers.employee_controller import EmployeeController
 from app.repositories.employee_repository import EmployeeRepository
-from app.repositories.client_repository import ClientRepository
-from app.repositories.contract_repository import ContractRepository
-from app.repositories.event_repository import EventRepository
-from app.models.employee import Employee
-from app.models.client import Client
-from app.models.contract import Contract
-from app.models.event import Event
 from app.models.department import Department
+from app.models.employee import Employee
 from app.utils.auth import hash_password
 
 
@@ -2392,161 +3353,6 @@ def test_auth_login_success(db_session, auth_ctrl):
     # AuthController.login does not return 'email' in user_data dict
     assert user["full_name"] == "Auth Success"
     assert user["department"] == "AUTH_DEPT"
-
-
-def test_client_controller_unauthorized(db_session, auth_ctrl):
-    """Covers permission denial branches using manual session injection."""
-    client_repo = ClientRepository(db_session)
-    ctrl = ClientController(client_repo, auth_ctrl)
-
-    # Support cannot create clients
-    auth_ctrl.current_user_data = {"id": 1, "department": "SUPPORT"}
-    assert ctrl.create_client({"full_name": "Fail", "phone": "123"}) is None
-
-    # Sales cannot update unknown clients or others' clients
-    auth_ctrl.current_user_data = {"id": 2, "department": "SALES"}
-    assert ctrl.update_client(9999, {"full_name": "New"}) is None
-
-
-def test_contract_controller_ownership(db_session, auth_ctrl):
-    """Covers ownership and not found logic."""
-    contract_repo = ContractRepository(db_session)
-    ctrl = ContractController(contract_repo, auth_ctrl)
-
-    sales_dept = Department(name="SALES")
-    db_session.add(sales_dept)
-    db_session.flush()
-
-    emp5 = Employee(
-        id=5, full_name="S1", email="s5@t.com", password="p",
-        employee_number="E5", department_id=sales_dept.id
-    )
-    emp10 = Employee(
-        id=10, full_name="S2", email="s10@t.com", password="p",
-        employee_number="E10", department_id=sales_dept.id
-    )
-    db_session.add_all([emp5, emp10])
-    db_session.flush()
-
-    cl = Client(full_name="X", email="x@t.com", phone="1",
-                company_name="X", sales_contact_id=5)
-    db_session.add(cl)
-    db_session.flush()
-
-    c = Contract(id=102, sales_contact_id=10, client_id=cl.id,
-                 total_amount=1000, remaining_amount=1000)
-    db_session.add(c)
-    db_session.flush()
-
-    # User 5 tries to update user 10's contract
-    auth_ctrl.current_user_data = {"id": 5, "department": "SALES"}
-    assert ctrl.update_contract(102, {"total_amount": 2000}) is None
-
-
-def test_event_controller_complex_rules(db_session, auth_ctrl):
-    """Covers unsigned contracts and support assigned logic."""
-    event_repo = EventRepository(db_session)
-    ctrl = EventController(event_repo, auth_ctrl)
-
-    s_dept = Department(name="SALES")
-    sup_dept = Department(name="SUPPORT")
-    db_session.add_all([s_dept, sup_dept])
-    db_session.flush()
-
-    s_emp = Employee(id=20, full_name="S1", email="s20@t.com", password="p",
-                     employee_number="E20", department_id=s_dept.id)
-    sup_emp = Employee(id=21, full_name="Sup1", email="s21@t.com", password="p",
-                       employee_number="E21", department_id=sup_dept.id)
-    db_session.add_all([s_emp, sup_emp])
-    db_session.flush()
-
-    cl = Client(full_name="Y", email="y@t.com", phone="2",
-                company_name="Y", sales_contact_id=20)
-    db_session.add(cl)
-    db_session.flush()
-
-    c = Contract(id=202, sales_contact_id=20, is_signed=False,
-                 total_amount=0, remaining_amount=0, client_id=cl.id)
-    db_session.add(c)
-    db_session.flush()
-
-    # Cannot create event for unsigned contract
-    auth_ctrl.current_user_data = {"id": 20, "department": "SALES"}
-    assert ctrl.create_event({"name": "X"}, c) is None
-
-    ev = Event(id=302, name="Ev", location="P", attendees=5, notes="N",
-               client_id=cl.id, contract_id=c.id, support_contact_id=sup_emp.id,
-               event_date_start=datetime.now(), event_date_end=datetime.now())
-    db_session.add(ev)
-    db_session.flush()
-
-    # Different support user cannot update
-    auth_ctrl.current_user_data = {"id": 99, "department": "SUPPORT"}
-    assert ctrl.update_event(302, {"notes": "hack"}) is None
-
-
-def test_controllers_list_methods(db_session, auth_ctrl):
-    """Covers list_all methods."""
-    auth_ctrl.current_user_data = {"id": 1, "department": "MANAGEMENT"}
-
-    cl_ctrl = ClientController(ClientRepository(db_session), auth_ctrl)
-    assert isinstance(cl_ctrl.list_all_clients(), list)
-
-    co_ctrl = ContractController(ContractRepository(db_session), auth_ctrl)
-    assert co_ctrl.list_all_contracts() is not None
-
-    ev_ctrl = EventController(EventRepository(db_session), auth_ctrl)
-    assert ev_ctrl.list_all_events() is not None
-
-
-def test_employee_management_denials(db_session, auth_ctrl):
-    """Covers admin-only creation logic."""
-    emp_repo = EmployeeRepository(db_session)
-    ctrl = EmployeeController(emp_repo, auth_ctrl)
-    auth_ctrl.current_user_data = {"department": "SALES"}
-    assert ctrl.create_employee({"full_name": "Ghost"}) is None
-
-
-def test_repository_integrity_failure(db_session):
-    """Covers BaseRepository IntegrityError handling."""
-    repo = ClientRepository(db_session)
-    c1 = Client(full_name="A", email="dup@t.com", phone="1", company_name="C")
-    db_session.add(c1)
-    db_session.commit()
-
-    c2 = Client(full_name="B", email="dup@t.com", phone="2", company_name="C")
-    with pytest.raises(IntegrityError):
-        repo.add(c2)
-
-
-def test_repository_delete_logic(db_session):
-    """Covers the delete method in BaseRepository."""
-    repo = ClientRepository(db_session)
-    cl = Client(full_name="Del", email="del@t.com", phone="0", company_name="D")
-    db_session.add(cl)
-    db_session.flush()
-    repo.delete(cl)
-    assert repo.get_by_id(cl.id) is None
-
-
-def test_repository_specialized_filters(db_session):
-    """Covers specific filter methods in repositories."""
-    e_repo = EmployeeRepository(db_session)
-    assert e_repo.get_by_email("none@t.com") is None
-
-    c_repo = ContractRepository(db_session)
-    assert isinstance(c_repo.get_unsigned_contracts(), list)
-
-    ev_repo = EventRepository(db_session)
-    assert isinstance(ev_repo.get_events_without_support(), list)
-
-
-def test_models_string_representation():
-    """Covers __repr__ for all models."""
-    assert "Client" in repr(Client(full_name="Test"))
-    assert "Contract" in repr(Contract(id=1))
-    assert "Event" in repr(Event(name="Party"))
-    assert "Employee" in repr(Employee(full_name="T", email="t@t.com"))
 
 ===============================================================================
     ./tests/test_functional_management.py
@@ -2707,7 +3513,6 @@ def test_support_restrictions(auth_controller):
 ===============================================================================
     ./tests/test_functional_sales.py
 ===============================================================================
-# tests/test_functional_sales.py
 """
 Functional tests for Sales (T13) operations.
 
@@ -2725,6 +3530,10 @@ List of tests:
   (6.12).
 - test_support_can_update_assigned_event: Verify support can update their event
   (6.13).
+- test_sales_list_unsigned_contracts_filtered_by_owner: Verify sales sees only
+  their unsigned contracts.
+- test_sales_list_unpaid_contracts_filtered_by_owner: Verify sales sees only
+  their unpaid contracts.
 """
 
 import uuid
@@ -3073,6 +3882,107 @@ def test_support_can_update_assigned_event(sales_suite):
     assert updated is not None
     assert updated.notes == "Updated notes"
 
+
+def test_sales_list_unsigned_contracts_filtered_by_owner(sales_suite):
+    """Verify sales sees only their unsigned contracts."""
+    client_ctrl = sales_suite["client_ctrl"]
+    contract_ctrl = sales_suite["contract_ctrl"]
+    s1 = sales_suite["sales_1"]
+    s2 = sales_suite["sales_2"]
+
+    s1_user = {"id": s1.id, "department": "SALES"}
+    s2_user = {"id": s2.id, "department": "SALES"}
+
+    s1_client = client_ctrl.create_client(
+        user_data=s1_user,
+        client_data={
+            "full_name": "Unsigned S1 Client",
+            "email": f"u1_{uuid.uuid4().hex[:6]}@c.com",
+            "phone": "01",
+            "company_name": "U1 Corp",
+        },
+    )
+    s2_client = client_ctrl.create_client(
+        user_data=s2_user,
+        client_data={
+            "full_name": "Unsigned S2 Client",
+            "email": f"u2_{uuid.uuid4().hex[:6]}@c.com",
+            "phone": "02",
+            "company_name": "U2 Corp",
+        },
+    )
+
+    s1_contract = contract_ctrl.repository.add(Contract(
+        total_amount=100,
+        remaining_amount=100,
+        is_signed=False,
+        client_id=s1_client.id,
+        sales_contact_id=s1.id,
+    ))
+    contract_ctrl.repository.add(Contract(
+        total_amount=200,
+        remaining_amount=200,
+        is_signed=False,
+        client_id=s2_client.id,
+        sales_contact_id=s2.id,
+    ))
+
+    results = contract_ctrl.list_unsigned_contracts(user_data=s1_user) or []
+    result_ids = {c.id for c in results}
+
+    assert s1_contract.id in result_ids
+    assert all(c.sales_contact_id == s1.id for c in results)
+
+
+def test_sales_list_unpaid_contracts_filtered_by_owner(sales_suite):
+    """Verify sales sees only their unpaid contracts."""
+    client_ctrl = sales_suite["client_ctrl"]
+    contract_ctrl = sales_suite["contract_ctrl"]
+    s1 = sales_suite["sales_1"]
+    s2 = sales_suite["sales_2"]
+
+    s1_user = {"id": s1.id, "department": "SALES"}
+    s2_user = {"id": s2.id, "department": "SALES"}
+
+    s1_client = client_ctrl.create_client(
+        user_data=s1_user,
+        client_data={
+            "full_name": "Unpaid S1 Client",
+            "email": f"p1_{uuid.uuid4().hex[:6]}@c.com",
+            "phone": "03",
+            "company_name": "P1 Corp",
+        },
+    )
+    s2_client = client_ctrl.create_client(
+        user_data=s2_user,
+        client_data={
+            "full_name": "Unpaid S2 Client",
+            "email": f"p2_{uuid.uuid4().hex[:6]}@c.com",
+            "phone": "04",
+            "company_name": "P2 Corp",
+        },
+    )
+
+    s1_contract = contract_ctrl.repository.add(Contract(
+        total_amount=300,
+        remaining_amount=50,
+        is_signed=True,
+        client_id=s1_client.id,
+        sales_contact_id=s1.id,
+    ))
+    contract_ctrl.repository.add(Contract(
+        total_amount=400,
+        remaining_amount=10,
+        is_signed=True,
+        client_id=s2_client.id,
+        sales_contact_id=s2.id,
+    ))
+
+    results = contract_ctrl.list_unpaid_contracts(user_data=s1_user) or []
+    result_ids = {c.id for c in results}
+
+    assert s1_contract.id in result_ids
+    assert all(c.sales_contact_id == s1.id for c in results)
 
 ===============================================================================
     ./tests/test_integration_business_repos.py
@@ -3895,18 +4805,198 @@ def test_repo_rollback_on_error(employee_repo, db_session):
         employee_repo.add(emp2)
 
 ===============================================================================
+    ./tests/test_repository_and_decorators_coverage.py
+===============================================================================
+"""
+tests/test_repository_and_decorators_coverage.py
+
+Covers:
+- BaseRepository rollback paths (add/update/delete)
+- require_auth decorator user_data resolution paths
+
+Non-regression: require_auth is used WITHOUT parameters (it's not a factory).
+Non-regression: user_data is provided via kwargs / controller session / token,
+not via positional args (current implementation doesn't support that).
+"""
+
+import pytest
+from sqlalchemy.exc import SQLAlchemyError
+
+from app.models.client import Client
+from app.repositories.base_repository import BaseRepository
+from app.utils.decorators import require_auth
+
+
+class _DummyAuthCtrl:
+    """Minimal auth controller stub used by require_auth fallback logic."""
+
+    def __init__(self):
+        self.current_user_data = None
+
+
+class _DummyController:
+    """Controller-like object holding auth_controller for @require_auth."""
+
+    def __init__(self, auth_ctrl):
+        self.auth_controller = auth_ctrl
+
+    @require_auth
+    def action(self, *args, user_data=None, **kwargs):
+        """Return resolved user_data so tests can assert injection works."""
+        return user_data
+
+    @require_auth
+    def action_with_arg(self, value, *args, user_data=None, **kwargs):
+        """Ensures decorator doesn't break positional parameters."""
+        return {"value": value, "user_data": user_data}
+
+
+def _make_valid_client(index: int = 1) -> Client:
+    """
+    Create a Client respecting DB constraints.
+    Adjust here if your model has additional NOT NULL constraints.
+    """
+    return Client(
+        full_name=f"Client {index}",
+        email=f"client{index}@example.com",
+        phone=f"06000000{index}",
+        company_name=f"Company {index}",
+    )
+
+
+def test_base_repository_update_rollback_on_sqlalchemy_error(db_session):
+    """If commit fails during update, the session should rollback and raise."""
+    repo = BaseRepository(db_session, Client)
+    client = repo.add(_make_valid_client(1))
+
+    rolled = {"called": False}
+
+    def _fake_rollback():
+        rolled["called"] = True
+
+    def _fake_commit():
+        raise SQLAlchemyError("boom")
+
+    db_session.rollback = _fake_rollback
+    db_session.commit = _fake_commit
+
+    with pytest.raises(SQLAlchemyError):
+        repo.update(client.id, {"phone": "0699999999"})
+
+    assert rolled["called"] is True
+
+
+def test_base_repository_delete_rollback_on_sqlalchemy_error(db_session):
+    """If commit fails during delete, the session should rollback and raise."""
+    repo = BaseRepository(db_session, Client)
+    client = repo.add(_make_valid_client(2))
+
+    rolled = {"called": False}
+
+    def _fake_rollback():
+        rolled["called"] = True
+
+    def _fake_commit():
+        raise SQLAlchemyError("boom")
+
+    db_session.rollback = _fake_rollback
+    db_session.commit = _fake_commit
+
+    with pytest.raises(SQLAlchemyError):
+        repo.delete(client)
+
+    assert rolled["called"] is True
+
+
+def test_require_auth_accepts_user_data_from_kwargs():
+    """user_data provided explicitly via kwargs is passed through unchanged."""
+    auth = _DummyAuthCtrl()
+    ctrl = _DummyController(auth)
+
+    user = {"id": 1, "department": "SALES"}
+    out = ctrl.action(user_data=user)
+    assert out == user
+
+
+def test_require_auth_uses_controller_current_user_data():
+    """If no explicit user_data, decorator falls back to auth_controller.current_user_data."""
+    auth = _DummyAuthCtrl()
+    auth.current_user_data = {"id": 3, "department": "MANAGEMENT"}
+    ctrl = _DummyController(auth)
+
+    out = ctrl.action()
+    assert out == {"id": 3, "department": "MANAGEMENT"}
+
+
+def test_require_auth_uses_token_payload(monkeypatch):
+    """If no user_data anywhere, decorator uses token -> decode_token payload."""
+    from app.utils import decorators as dec_mod
+
+    auth = _DummyAuthCtrl()
+    ctrl = _DummyController(auth)
+
+    monkeypatch.setattr(dec_mod, "get_token", lambda: "dummy.jwt.token")
+    monkeypatch.setattr(dec_mod, "decode_token", lambda _t: {"id": 7, "department": "SALES"})
+
+    out = ctrl.action()
+    assert out == {"id": 7, "department": "SALES"}
+
+
+def test_require_auth_denies_when_no_user_and_no_token(monkeypatch):
+    """If no user_data and no token, decorator returns None."""
+    from app.utils import decorators as dec_mod
+
+    auth = _DummyAuthCtrl()
+    ctrl = _DummyController(auth)
+
+    monkeypatch.setattr(dec_mod, "get_token", lambda: None)
+
+    out = ctrl.action()
+    assert out is None
+
+
+def test_require_auth_denies_when_token_invalid(monkeypatch):
+    """If token exists but decode_token returns None, decorator returns None."""
+    from app.utils import decorators as dec_mod
+
+    auth = _DummyAuthCtrl()
+    ctrl = _DummyController(auth)
+
+    monkeypatch.setattr(dec_mod, "get_token", lambda: "dummy.jwt.token")
+    monkeypatch.setattr(dec_mod, "decode_token", lambda _t: None)
+
+    out = ctrl.action()
+    assert out is None
+
+
+def test_require_auth_does_not_break_positional_args():
+    """Decorator must preserve normal positional args and inject user_data."""
+    auth = _DummyAuthCtrl()
+    ctrl = _DummyController(auth)
+
+    user = {"id": 10, "department": "SALES"}
+    out = ctrl.action_with_arg("hello", user_data=user)
+
+    assert out["value"] == "hello"
+    assert out["user_data"] == user
+
+===============================================================================
     ./tests/test_robustness_edge_cases.py
 ===============================================================================
 """
-Integration tests for edge cases, permission denials, and repository exceptions.
+Integration tests for edge cases, permission denials, and coverage optimization.
 
 List of tests:
 - test_auth_controller_full_flow: Covers logout and failed login logic.
+- test_auth_login_success: Covers successful login and session management.
 - test_client_controller_unauthorized: Covers permission denial branches.
 - test_contract_controller_ownership: Covers ownership and not found logic.
 - test_event_controller_complex_rules: Covers unsigned contracts and support.
+- test_controllers_list_methods: Covers list_all methods for all controllers.
 - test_employee_management_denials: Covers admin-only creation/update logic.
 - test_repository_integrity_failure: Covers DB constraints and rollbacks.
+- test_repository_delete_logic: Covers the delete method in BaseRepository.
+- test_repository_specialized_filters: Covers specific repository lookups.
 - test_models_string_representation: Covers __repr__ methods for all models.
 """
 
@@ -3927,6 +5017,7 @@ from app.models.client import Client
 from app.models.contract import Contract
 from app.models.event import Event
 from app.models.department import Department
+from app.utils.auth import hash_password
 
 
 @pytest.fixture
@@ -3943,67 +5034,77 @@ def test_auth_controller_full_flow(auth_ctrl):
     assert auth_ctrl.check_user_permission("read") is False
 
 
+def test_auth_login_success(db_session, auth_ctrl):
+    """Covers successful login and user data structure."""
+    dept = Department(name="AUTH_DEPT")
+    db_session.add(dept)
+    db_session.flush()
+
+    pwd = hash_password("secret123")
+    emp = Employee(
+        full_name="Auth Success",
+        email="success@test.com",
+        password=pwd,
+        employee_number="EMP_OK",
+        department_id=dept.id
+    )
+    db_session.add(emp)
+    db_session.commit()
+
+    user = auth_ctrl.login("success@test.com", "secret123")
+    assert user is not None
+    # AuthController.login does not return 'email' in user_data dict
+    assert user["full_name"] == "Auth Success"
+    assert user["department"] == "AUTH_DEPT"
+
+
 def test_client_controller_unauthorized(db_session, auth_ctrl):
-    """Covers permission denial branches."""
+    """Covers permission denial branches using manual session injection."""
     client_repo = ClientRepository(db_session)
     ctrl = ClientController(client_repo, auth_ctrl)
-    user_support = {"id": 1, "department": "SUPPORT"}
-    assert ctrl.create_client(user_support, {"full_name": "Fail"}) in [None, []]
-    user_sales = {"id": 2, "department": "SALES"}
-    assert ctrl.update_client(user_sales, 9999, {"full_name": "New"}) in [None, []]
+
+    # Support cannot create clients
+    auth_ctrl.current_user_data = {"id": 1, "department": "SUPPORT"}
+    assert ctrl.create_client({"full_name": "Fail", "phone": "123"}) is None
+
+    # Sales cannot update unknown clients or others' clients
+    auth_ctrl.current_user_data = {"id": 2, "department": "SALES"}
+    assert ctrl.update_client(9999, {"full_name": "New"}) is None
 
 
 def test_contract_controller_ownership(db_session, auth_ctrl):
     """Covers ownership and not found logic."""
     contract_repo = ContractRepository(db_session)
     ctrl = ContractController(contract_repo, auth_ctrl)
-    user_sales = {"id": 5, "department": "SALES"}
 
-    # Create Department
-    sales_dept = Department(name="SALES_OWN")
+    sales_dept = Department(name="SALES")
     db_session.add(sales_dept)
     db_session.flush()
 
-    # Create two employees to avoid FK issues with sales_contact_id
     emp5 = Employee(
-        id=5,
-        full_name="Sales Guy",
-        email="s5@t.com",
-        password="password",
-        employee_number="EMP005",
-        department_id=sales_dept.id
+        id=5, full_name="S1", email="s5@t.com", password="p",
+        employee_number="E5", department_id=sales_dept.id
     )
     emp10 = Employee(
-        id=10,
-        full_name="Other Sales",
-        email="s10@t.com",
-        password="password",
-        employee_number="EMP010",
-        department_id=sales_dept.id
+        id=10, full_name="S2", email="s10@t.com", password="p",
+        employee_number="E10", department_id=sales_dept.id
     )
     db_session.add_all([emp5, emp10])
     db_session.flush()
 
-    cl = Client(
-        full_name="X",
-        email="x@t.com",
-        phone="1",
-        company_name="X",
-        sales_contact_id=5
-    )
+    cl = Client(full_name="X", email="x@t.com", phone="1",
+                company_name="X", sales_contact_id=5)
     db_session.add(cl)
     db_session.flush()
 
-    other_contract = Contract(
-        id=102,
-        sales_contact_id=10,
-        client_id=cl.id,
-        total_amount=1000,
-        remaining_amount=1000
-    )
-    db_session.add(other_contract)
+    c = Contract(id=102, sales_contact_id=10, client_id=cl.id,
+                 total_amount=1000, remaining_amount=1000)
+    db_session.add(c)
     db_session.flush()
-    assert ctrl.update_contract(user_sales, 102, {"total_amount": 2000}) in [None, []]
+
+    # User 5 tries to update user 10's contract
+    auth_ctrl.current_user_data = {"id": 5, "department": "SALES"}
+    assert ctrl.update_contract(102, {"total_amount": 2000}) is None
 
 
 def test_event_controller_complex_rules(db_session, auth_ctrl):
@@ -4011,5 +5112,103 @@ def test_event_controller_complex_rules(db_session, auth_ctrl):
     event_repo = EventRepository(db_session)
     ctrl = EventController(event_repo, auth_ctrl)
 
-    sales_dept = Department(name="SALES_RULE")
+    s_dept = Department(name="SALES")
+    sup_dept = Department(name="SUPPORT")
+    db_session.add_all([s_dept, sup_dept])
+    db_session.flush()
+
+    s_emp = Employee(id=20, full_name="S1", email="s20@t.com", password="p",
+                     employee_number="E20", department_id=s_dept.id)
+    sup_emp = Employee(id=21, full_name="Sup1", email="s21@t.com", password="p",
+                       employee_number="E21", department_id=sup_dept.id)
+    db_session.add_all([s_emp, sup_emp])
+    db_session.flush()
+
+    cl = Client(full_name="Y", email="y@t.com", phone="2",
+                company_name="Y", sales_contact_id=20)
+    db_session.add(cl)
+    db_session.flush()
+
+    c = Contract(id=202, sales_contact_id=20, is_signed=False,
+                 total_amount=0, remaining_amount=0, client_id=cl.id)
+    db_session.add(c)
+    db_session.flush()
+
+    # Cannot create event for unsigned contract
+    auth_ctrl.current_user_data = {"id": 20, "department": "SALES"}
+    assert ctrl.create_event({"name": "X"}, c) is None
+
+    ev = Event(id=302, name="Ev", location="P", attendees=5, notes="N",
+               client_id=cl.id, contract_id=c.id, support_contact_id=sup_emp.id,
+               event_date_start=datetime.now(), event_date_end=datetime.now())
+    db_session.add(ev)
+    db_session.flush()
+
+    # Different support user cannot update
+    auth_ctrl.current_user_data = {"id": 99, "department": "SUPPORT"}
+    assert ctrl.update_event(302, {"notes": "hack"}) is None
+
+
+def test_controllers_list_methods(db_session, auth_ctrl):
+    """Covers list_all methods."""
+    auth_ctrl.current_user_data = {"id": 1, "department": "MANAGEMENT"}
+
+    cl_ctrl = ClientController(ClientRepository(db_session), auth_ctrl)
+    assert isinstance(cl_ctrl.list_all_clients(), list)
+
+    co_ctrl = ContractController(ContractRepository(db_session), auth_ctrl)
+    assert co_ctrl.list_all_contracts() is not None
+
+    ev_ctrl = EventController(EventRepository(db_session), auth_ctrl)
+    assert ev_ctrl.list_all_events() is not None
+
+
+def test_employee_management_denials(db_session, auth_ctrl):
+    """Covers admin-only creation logic."""
+    emp_repo = EmployeeRepository(db_session)
+    ctrl = EmployeeController(emp_repo, auth_ctrl)
+    auth_ctrl.current_user_data = {"department": "SALES"}
+    assert ctrl.create_employee({"full_name": "Ghost"}) is None
+
+
+def test_repository_integrity_failure(db_session):
+    """Covers BaseRepository IntegrityError handling."""
+    repo = ClientRepository(db_session)
+    c1 = Client(full_name="A", email="dup@t.com", phone="1", company_name="C")
+    db_session.add(c1)
+    db_session.commit()
+
+    c2 = Client(full_name="B", email="dup@t.com", phone="2", company_name="C")
+    with pytest.raises(IntegrityError):
+        repo.add(c2)
+
+
+def test_repository_delete_logic(db_session):
+    """Covers the delete method in BaseRepository."""
+    repo = ClientRepository(db_session)
+    cl = Client(full_name="Del", email="del@t.com", phone="0", company_name="D")
+    db_session.add(cl)
+    db_session.flush()
+    repo.delete(cl)
+    assert repo.get_by_id(cl.id) is None
+
+
+def test_repository_specialized_filters(db_session):
+    """Covers specific filter methods in repositories."""
+    e_repo = EmployeeRepository(db_session)
+    assert e_repo.get_by_email("none@t.com") is None
+
+    c_repo = ContractRepository(db_session)
+    assert isinstance(c_repo.get_unsigned_contracts(), list)
+
+    ev_repo = EventRepository(db_session)
+    assert isinstance(ev_repo.get_events_without_support(), list)
+
+
+def test_models_string_representation():
+    """Covers __repr__ for all models."""
+    assert "Client" in repr(Client(full_name="Test"))
+    assert "Contract" in repr(Contract(id=1))
+    assert "Event" in repr(Event(name="Party"))
+    assert "Employee" in repr(Employee(full_name="T", email="t@t.com"))
 

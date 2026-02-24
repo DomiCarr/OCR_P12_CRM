@@ -336,15 +336,18 @@ def main():
                     print("Invalid option. Please try again.")
                     continue
 
-                contract_id = event_view.ask_input("Enter Contract ID")
-                if not contract_id.isdigit():
+                contract_id_raw = event_view.ask_input("Enter Contract ID").strip()
+
+                if not contract_id_raw.isdigit():
+                    print("Invalid Contract ID. Please enter a numeric ID.")
                     continue
 
-                contract = contract_ctrl.repository.get_by_id(int(contract_id))
+                contract = contract_ctrl.repository.get_by_id(int(contract_id_raw))
                 if not contract:
                     print("Contract not found.")
                     continue
 
+                # FAIL FAST business rules before asking event details
                 if contract.sales_contact_id != user_data["id"]:
                     print(
                         "Access denied: you are not the sales contact for this "
@@ -358,18 +361,37 @@ def main():
 
                 raw = event_view.ask_event_details()
 
-                start_raw = str(raw.get("event_date_start", "")).strip()
-                end_raw = str(raw.get("event_date_end", "")).strip()
-                try:
-                    start_dt = datetime.strptime(start_raw, "%Y-%m-%d %H:%M:%S")
-                    end_dt = datetime.strptime(end_raw, "%Y-%m-%d %H:%M:%S")
-                except ValueError:
+                def parse_dt(value: str):
+                    value = value.strip()
+                    if not value:
+                        return None
+                    # Accept short and full formats
+                    for fmt in ("%Y-%m-%d %H", "%Y-%m-%d %H:%M:%S"):
+                        try:
+                            return datetime.strptime(value, fmt)
+                        except ValueError:
+                            continue
+                    return None
+
+                start_dt = parse_dt(str(raw.get("event_date_start", "")))
+                end_dt = parse_dt(str(raw.get("event_date_end", "")))
+
+                if not start_dt or not end_dt:
+                    print(
+                        "Invalid date format. Use 'YYYY-MM-DD HH' "
+                        "or 'YYYY-MM-DD HH:MM:SS'."
+                    )
+                    continue
+
+                if end_dt <= start_dt:
+                    print("Invalid dates: event end must be after event start.")
                     continue
 
                 attendees_raw = str(raw.get("attendees", "")).strip()
                 try:
                     attendees = int(attendees_raw)
                 except ValueError:
+                    print("Invalid attendees value. Please enter a number.")
                     continue
 
                 event_data = {
@@ -383,6 +405,7 @@ def main():
                     "contract_id": contract.id,
                     "support_contact_id": None,
                 }
+
                 event_ctrl.create_event(
                     user_data=user_data,
                     event_data=event_data,

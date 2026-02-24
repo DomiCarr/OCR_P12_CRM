@@ -13,16 +13,21 @@ class EventView(BaseView):
         if not events:
             print("No events found.")
             return
+
         for event in events:
             support = (
                 event.support_contact.full_name
                 if event.support_contact
                 else "TBD"
             )
+            notes = (event.notes or "").strip()
+            short_notes = notes if len(notes) <= 60 else f"{notes[:60]}..."
+
             print(
                 f"ID: {event.id} | Name: {event.name} | "
                 f"From: {event.event_date_start} To: {event.event_date_end} | "
-                f"Support: {support}"
+                f"Location: {event.location} | Attendees: {event.attendees} | "
+                f"Support: {support} | Notes: {short_notes}"
             )
 
     def ask_event_details(self) -> dict:
@@ -30,12 +35,8 @@ class EventView(BaseView):
         print("\n=== Add New Event ===")
         return {
             "name": self.ask_input("Event Name"),
-            "event_date_start": self.ask_input(
-                "Event Start (YYYY-MM-DD HH:MM:SS)"
-            ),
-            "event_date_end": self.ask_input(
-                "Event End (YYYY-MM-DD HH:MM:SS)"
-            ),
+            "event_date_start": self.ask_input("Event Start (YYYY-MM-DD HH)"),
+            "event_date_end": self.ask_input("Event End (YYYY-MM-DD HH)"),
             "location": self.ask_input("Location"),
             "attendees": self.ask_input("Attendees"),
             "notes": self.ask_input("Notes"),
@@ -46,10 +47,10 @@ class EventView(BaseView):
         print("\n=== Update Event ===")
         return {
             "event_date_start": self.ask_input(
-                "Event Start (YYYY-MM-DD HH:MM:SS) [Leave empty to skip]"
+                "Event Start (YYYY-MM-DD HH) [Leave empty to skip]"
             ),
             "event_date_end": self.ask_input(
-                "Event End (YYYY-MM-DD HH:MM:SS) [Leave empty to skip]"
+                "Event End (YYYY-MM-DD HH) [Leave empty to skip]"
             ),
             "location": self.ask_input("Location [Leave empty to skip]"),
             "attendees": self.ask_input("Attendees [Leave empty to skip]"),

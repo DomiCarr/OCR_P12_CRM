@@ -3,6 +3,8 @@
 Controller handling business logic for Contract management.
 """
 
+import sentry_sdk
+
 from app.models.client import Client
 from app.models.contract import Contract
 from app.repositories.contract_repository import ContractRepository
@@ -90,7 +92,12 @@ class ContractController:
 
     @require_auth
     def update_contract(self, user_data: dict, contract_id: int, updates: dict):
-        """Update contract details if user has permission."""
+        """
+        Update contract details if user has permission.
+
+        Sentry audit:
+        - Logs contract signature when is_signed.
+        """
         self.auth_controller.current_user_data = user_data
         if not self.auth_controller.check_user_permission("update_contract"):
             print("Access denied: No update permission for contracts.")
@@ -101,8 +108,10 @@ class ContractController:
             print("Contract not found.")
             return None
 
-        # Logic: Sales can only update their own contracts. Management can
-        # update all.
+        # Track previous signature state for audit logging
+        was_signed = bool(contract.is_signed)
+
+        # Logic: Sales can only update their own contracts. Management can update all.
         is_owner = contract.sales_contact_id == user_data["id"]
         is_management = user_data["department"] == "MANAGEMENT"
 
@@ -111,6 +120,23 @@ class ContractController:
             return None
 
         updated_contract = self.repository.update(contract_id, updates)
+
         if updated_contract:
             print(f"Contract {updated_contract.id} updated.")
+
+            # Audit signature only on state transition False -> True
+            now_signed = bool(updated_contract.is_signed)
+            if (not was_signed) and now_signed:
+                sentry_sdk.set_tag("audit", "contract")
+                sentry_sdk.capture_message("contract.signed", level="info")
+                sentry_sdk.set_context(
+                    "contract_action",
+                    {
+                        "action": "signed",
+                        "actor_id": user_data.get("id"),
+                        "contract_id": updated_contract.id,
+                        "client_id": updated_contract.client_id,
+                    },
+                )
+
         return updated_contract

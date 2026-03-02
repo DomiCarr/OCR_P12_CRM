@@ -1,2335 +1,77 @@
-Generated 2026-02-24 06:41:04
+================================================================================
+EXPORT STRUCTURE & CODE APP
+Generated: 2026-02-24 22:47:10
+Project root: /Users/carrasd/Develp/OCR/Projets/P12/CRM
+================================================================================
 
-===============================================================================
-    ./.pytest_cache/README.md
-===============================================================================
-# pytest cache directory #
-
-This directory contains data from the pytest's cache plugin,
-which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
-
-**Do not** commit this to version control.
-
-See [the docs](https://docs.pytest.org/en/stable/how-to/cache.html) for more information.
-
-
-===============================================================================
-    ./README.md
-===============================================================================
-# OCR_P12_CRM
-
-
-===============================================================================
-    ./app/controllers/auth_controller.py
-===============================================================================
-# app/controllers/auth_controller.py
-"""
-This module handles the authentication logic, integrating JWT generation
-and local storage to provide persistent user sessions.
-"""
-
-from typing import Optional
-import sentry_sdk
-from app.repositories.employee_repository import EmployeeRepository
-from app.utils.auth import verify_password
-from app.utils.permissions import has_permission
-from app.utils.jwt_handler import create_token, decode_token
-from app.utils.token_storage import save_token, get_token, delete_token
-
-
-class AuthController:
-    """
-    Controller managing login, logout, and persistent session validation.
-    """
-
-    def __init__(self, employee_repository: EmployeeRepository):
-        self.repository = employee_repository
-        self.current_user_data: Optional[dict] = None
-
-    def login(self, email: str, password: str) -> Optional[dict]:
-        """
-        Authenticate user and save a JWT locally if successful.
-        """
-        employee = self.repository.get_by_email(email)
-
-        if employee and verify_password(employee.password, password):
-            # Generate and save token locally
-            token = create_token(employee.id, employee.department.name)
-            save_token(token)
-
-            # Return user data for main.py session management
-            user_data = {
-                "id": employee.id,
-                "full_name": employee.full_name,
-                "department": employee.department.name
-            }
-
-            # Attach user identity to Sentry scope for error tracking
-            sentry_sdk.set_user({
-                "id": str(employee.id),
-                "username": employee.full_name,
-                "department": employee.department.name
-            })
-
-            self.current_user_data = user_data
-            return user_data
-
-        return None
-
-    def logout(self) -> None:
-        """
-        Clear the session by deleting the local token.
-        """
-        delete_token()
-        # Clear Sentry user context to avoid cross-user error reporting
-        sentry_sdk.set_user(None)
-        self.current_user_data = None
-
-    def get_logged_in_user(self) -> Optional[dict]:
-        """
-        Validate the local token and return user data if still valid.
-        """
-        token = get_token()
-        if not token:
-            return None
-
-        payload = decode_token(token)
-        if payload:
-            # Restore Sentry user identity for persistent sessions
-            sentry_sdk.set_user({
-                "id": str(payload.get("id")),
-                "department": payload.get("department")
-            })
-            self.current_user_data = payload
-            return payload
-
-        # Token expired or invalid
-        delete_token()
-        return None
-
-    def check_user_permission(self, action: str) -> bool:
-        """
-        Check if the currently logged-in user has permission for an action.
-        """
-        if not self.current_user_data:
-            return False
-
-        dept = self.current_user_data.get("department")
-        return has_permission(action, dept)
-
-===============================================================================
-    ./app/controllers/client_controller.py
-===============================================================================
-# app/controllers/client_controller.py
-"""
-Controller handling business logic for Client management.
-Ensures authentication and permission checks before data access.
-"""
-
-from datetime import datetime
-from app.models.client import Client
-from app.repositories.client_repository import ClientRepository
-from app.utils.decorators import require_auth
-
-
-class ClientController:
-    """Manages client-related operations."""
-
-    def __init__(self, repository: ClientRepository, auth_controller):
-        self.repository = repository
-        self.auth_controller = auth_controller
-
-    @require_auth
-    def list_all_clients(self, *args, user_data: dict | None = None):
-        """Fetch all clients if the user has the 'read_client' permission."""
-        if user_data is None and args:
-            if isinstance(args[0], dict) and "id" in args[0]:
-                user_data = args[0]
-
-        if user_data is None:
-            return []
-
-        self.auth_controller.current_user_data = user_data
-        permission = "read_client"
-        if self.auth_controller.check_user_permission(permission):
-            return self.repository.get_all_clients()
-        return []
-
-    @require_auth
-    def create_client(
-        self,
-        *args,
-        user_data: dict | None = None,
-        client_data: dict | None = None,
-    ):
-        """Create a new client and associate with the current sales person."""
-        if client_data is None and args:
-            first = args[0]
-            if isinstance(first, dict) and "id" in first and "department" in first:
-                user_data = first
-                if len(args) > 1:
-                    client_data = args[1]
-            else:
-                client_data = first
-
-        if user_data is None:
-            user_data = getattr(self.auth_controller, "current_user_data", None)
-
-        if not user_data or not client_data:
-            return None
-
-        self.auth_controller.current_user_data = user_data
-        if self.auth_controller.check_user_permission("create_client"):
-            client_data["sales_contact_id"] = user_data["id"]
-
-            if not client_data.get("last_contact"):
-                client_data["last_contact"] = datetime.now()
-
-            new_client = Client(**client_data)
-            created_client = self.repository.add(new_client)
-
-            if created_client:
-                print(f"Client '{created_client.full_name}' created.")
-            return created_client
-
-        print("Access denied: You do not have permission to create a client.")
-        return None
-
-    @require_auth
-    def update_client(self, user_data: dict, client_id: int, updates: dict):
-        """Update client if user is assigned sales contact or management."""
-        self.auth_controller.current_user_data = user_data
-        if not self.auth_controller.check_user_permission("update_client"):
-            print("Access denied: No update permission.")
-            return None
-
-        client = self.repository.get_by_id(client_id)
-        if not client:
-            print("Client not found.")
-            return None
-
-        # Logic: Sales can only update their own clients. Management can update all.
-        is_owner = client.sales_contact_id == user_data["id"]
-        is_management = user_data["department"] == "MANAGEMENT"
-
-        if not (is_owner or is_management):
-            print("Access denied: You are not the assigned sales contact.")
-            return None
-
-        # Update last_contact timestamp
-        updates["last_contact"] = datetime.now()
-
-        # FIXED: Pass 'updates' as a dict to match BaseRepository.update signature
-        updated_client = self.repository.update(client_id, updates)
-        if updated_client:
-            print(f"Client '{updated_client.full_name}' updated.")
-        return updated_client
-
-
-===============================================================================
-    ./app/controllers/contract_controller.py
-===============================================================================
-# app/controllers/contract_controller.py
-"""
-Controller handling business logic for Contract management.
-"""
-
-from app.models.client import Client
-from app.models.contract import Contract
-from app.repositories.contract_repository import ContractRepository
-from app.utils.decorators import require_auth
-
-
-class ContractController:
-    """Manages contract-related operations."""
-
-    def __init__(self, repository: ContractRepository, auth_controller):
-        self.repository = repository
-        self.auth_controller = auth_controller
-
-    @require_auth
-    def list_all_contracts(self, user_data: dict):
-        """
-        Fetch all contracts if allowed.
-        """
-        self.auth_controller.current_user_data = user_data
-        if self.auth_controller.check_user_permission("read_contract"):
-            return self.repository.get_all_contracts()
-        return None
-
-    @require_auth
-    def list_unsigned_contracts(self, user_data: dict):
-        """List unsigned contracts, optionally filtered for sales ownership."""
-        self.auth_controller.current_user_data = user_data
-        if not self.auth_controller.check_user_permission("read_contract"):
-            return None
-
-        contracts = self.repository.get_unsigned_contracts()
-        if user_data.get("department") == "SALES":
-            return [
-                c for c in contracts
-                if c.sales_contact_id == user_data.get("id")
-            ]
-        return contracts
-
-    @require_auth
-    def list_unpaid_contracts(self, user_data: dict):
-        """List unpaid contracts, optionally filtered for sales ownership."""
-        self.auth_controller.current_user_data = user_data
-        if not self.auth_controller.check_user_permission("read_contract"):
-            return None
-
-        contracts = self.repository.get_unpaid_contracts()
-        if user_data.get("department") == "SALES":
-            return [
-                c for c in contracts
-                if c.sales_contact_id == user_data.get("id")
-            ]
-        return contracts
-
-    @require_auth
-    def create_contract(self, user_data: dict, contract_data: dict):
-        """Create a new contract for a client."""
-        self.auth_controller.current_user_data = user_data
-        if self.auth_controller.check_user_permission("create_contract"):
-            if "sales_contact_id" not in contract_data:
-                client_id = contract_data.get("client_id")
-                if client_id is None:
-                    print("Client ID is required to create a contract.")
-                    return None
-
-                client = (
-                    self.repository.session.query(Client)
-                    .filter_by(id=client_id)
-                    .first()
-                )
-                if not client:
-                    print("Client not found.")
-                    return None
-
-                contract_data["sales_contact_id"] = client.sales_contact_id
-
-            new_contract = Contract(**contract_data)
-            created_contract = self.repository.add(new_contract)
-
-            if created_contract:
-                print(f"Contract {created_contract.id} created successfully.")
-            return created_contract
-
-        print("Access denied: You do not have permission to create a contract.")
-        return None
-
-    @require_auth
-    def update_contract(self, user_data: dict, contract_id: int, updates: dict):
-        """Update contract details if user has permission."""
-        self.auth_controller.current_user_data = user_data
-        if not self.auth_controller.check_user_permission("update_contract"):
-            print("Access denied: No update permission for contracts.")
-            return None
-
-        contract = self.repository.get_by_id(contract_id)
-        if not contract:
-            print("Contract not found.")
-            return None
-
-        # Logic: Sales can only update their own contracts. Management can
-        # update all.
-        is_owner = contract.sales_contact_id == user_data["id"]
-        is_management = user_data["department"] == "MANAGEMENT"
-
-        if not (is_owner or is_management):
-            print("Access denied: You are not the assigned sales contact.")
-            return None
-
-        updated_contract = self.repository.update(contract_id, updates)
-        if updated_contract:
-            print(f"Contract {updated_contract.id} updated.")
-        return updated_contract
-
-===============================================================================
-    ./app/controllers/employee_controller.py
-===============================================================================
-# app/controllers/employee_controller.py
-"""
-Controller handling business logic for Employee management.
-"""
-
-from app.models.employee import Employee
-from app.repositories.employee_repository import EmployeeRepository
-from app.utils.decorators import require_auth
-from app.utils.auth import hash_password
-
-
-class EmployeeController:
-    """Manages employee-related operations."""
-
-    def __init__(self, repository: EmployeeRepository, auth_controller):
-        self.repository = repository
-        self.auth_controller = auth_controller
-
-    @require_auth
-    def list_all_employees(self, user_data: dict):
-        """
-        Fetch all employees if the user has the 'read_employee' permission.
-        """
-        self.auth_controller.current_user_data = user_data
-
-        if self.auth_controller.check_user_permission("read_employee"):
-            return self.repository.get_all()
-
-        return []
-
-    @require_auth
-    def create_employee(self, user_data: dict, employee_data: dict):
-        """
-        Create a new employee after permission check and password hashing.
-        """
-        self.auth_controller.current_user_data = user_data
-
-        if not self.auth_controller.check_user_permission("create_employee"):
-            return None
-
-        # Hash the password before storage
-        employee_data["password"] = hash_password(employee_data["password"])
-
-        # Create the instance
-        new_employee = Employee(**employee_data)
-
-        # Pass the instance (not the dict) to the repository
-        created_employee = self.repository.add(new_employee)
-        return created_employee
-
-    @require_auth
-    def update_employee(self, user_data: dict, emp_id: int, update_data: dict):
-        """
-        Update an existing employee's data.
-        """
-        self.auth_controller.current_user_data = user_data
-
-        if not self.auth_controller.check_user_permission("update_employee"):
-            return None
-
-        if "password" in update_data:
-            update_data["password"] = hash_password(update_data["password"])
-
-        updated_emp = self.repository.update(emp_id, update_data)
-        return updated_emp
-
-===============================================================================
-    ./app/controllers/event_controller.py
-===============================================================================
-"""
-Controller handling business logic for Event management.
-"""
-
-from app.models.event import Event
-from app.repositories.event_repository import EventRepository
-from app.utils.decorators import require_auth
-
-
-class EventController:
-    """Manages event-related operations."""
-
-    def __init__(self, repository: EventRepository, auth_controller):
-        self.repository = repository
-        self.auth_controller = auth_controller
-
-    @require_auth
-    def list_all_events(self, user_data: dict):
-        """
-        Fetch all events if allowed.
-        """
-        self.auth_controller.current_user_data = user_data
-        if self.auth_controller.check_user_permission("read_event"):
-            return self.repository.get_all_events()
-        return None
-
-    @require_auth
-    def list_events_without_support(self, user_data: dict):
-        """List events that have no support contact assigned."""
-        self.auth_controller.current_user_data = user_data
-        if not self.auth_controller.check_user_permission("read_event"):
-            return None
-        return self.repository.get_events_without_support()
-
-    @require_auth
-    def list_my_events(self, user_data: dict):
-        """List events assigned to the current support user."""
-        self.auth_controller.current_user_data = user_data
-        if not self.auth_controller.check_user_permission("read_event"):
-            return None
-        support_id = user_data.get("id")
-        if support_id is None:
-            return None
-        return self.repository.get_my_events(support_id)
-
-    @require_auth
-    def create_event(self, user_data: dict, event_data: dict, contract):
-        """
-        Create a new event if the contract is signed and user is the owner.
-        """
-        self.auth_controller.current_user_data = user_data
-        if not self.auth_controller.check_user_permission("create_event"):
-            print("Access denied: No permission to create events.")
-            return None
-
-        if contract.sales_contact_id != user_data["id"]:
-            print("Access denied: You are not the sales contact for this client.")
-            return None
-
-        if not contract.is_signed:
-            print("Access denied: Cannot create an event for an unsigned contract.")
-            return None
-
-        new_event = Event(**event_data)
-        created_event = self.repository.add(new_event)
-
-        if created_event:
-            print(f"Event '{created_event.name}' created successfully.")
-        return created_event
-
-    @require_auth
-    def update_event(self, user_data: dict, event_id: int, updates: dict):
-        """Update event details if user is assigned support or management."""
-        self.auth_controller.current_user_data = user_data
-        if not self.auth_controller.check_user_permission("update_event"):
-            print("Access denied: No update permission for events.")
-            return None
-
-        event = self.repository.get_by_id(event_id)
-        if not event:
-            print("Event not found.")
-            return None
-
-        # Logic: Support assigned or Management can update
-        is_assigned = event.support_contact_id == user_data["id"]
-        is_management = user_data["department"] == "MANAGEMENT"
-
-        if not (is_assigned or is_management):
-            print("Access denied: You are not the assigned support contact.")
-            return None
-
-        updated_event = self.repository.update(event_id, updates)
-        if updated_event:
-            print(f"Event '{updated_event.name}' updated.")
-        return updated_event
-
-===============================================================================
-    ./app/models/__init__.py
-===============================================================================
-# app/models/__init__.py
-"""
-This module centralizes all SQLAlchemy models to facilitate imports
-and ensure they are registered with the Base metadata for migrations.
-"""
-
-from app.models.base import Base
-from app.models.department import Department
-from app.models.employee import Employee
-from app.models.client import Client
-from app.models.contract import Contract
-from app.models.event import Event
-
-__all__ = [
-    "Base",
-    "Department",
-    "Employee",
-    "Client",
-    "Contract",
-    "Event"
-]
-
-===============================================================================
-    ./app/models/base.py
-===============================================================================
-# app/models/base.py
-"""
-This module serves as the foundation for the ORM layer.
-- Provides a centralized DeclarativeBase for model registration.
-- Defines custom type aliases (Annotated) to standardize SQL constraints
-  (String lengths, Primary Keys, and Timestamps) across the entire schema.
-- Uses server-side functions for automated audit trails (created_at, updated_at).
-"""
-import datetime
-from typing import Annotated
-from sqlalchemy import String, Text, func
-from sqlalchemy.orm import DeclarativeBase, mapped_column
-
-
-# Type aliases to ensure consistency across all models
-# Primary keys with auto-increment
-pk_id = Annotated[int, mapped_column(primary_key=True, autoincrement=True)]
-
-# Standard string lengths for database columns
-str_20 = Annotated[str, mapped_column(String(20))]
-str_50 = Annotated[str, mapped_column(String(50))]
-str_100 = Annotated[str, mapped_column(String(100))]
-str_255 = Annotated[str, mapped_column(String(255))]
-
-# Long text for descriptions or notes
-text_type = Annotated[str, mapped_column(Text)]
-
-# Automatically managed timestamps
-timestamp_now = Annotated[
-    datetime.datetime,
-    mapped_column(server_default=func.now())
-]
-timestamp_update = Annotated[
-    datetime.datetime,
-    mapped_column(server_default=func.now(), onupdate=func.now())
-]
-
-
-class Base(DeclarativeBase):
-    """
-    Base class for declarative models.
-    Maintains a registry of all mapped classes.
-    """
-    pass
-
-===============================================================================
-    ./app/models/client.py
-===============================================================================
-# app/models/client.py
-"""
-This module defines the Client model, which stores customer information,
-contact details, and handles relationships with sales employees,
-contracts, and events.
-"""
-
-from typing import TYPE_CHECKING
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from app.models.base import (
-    Base,
-    pk_id,
-    str_50,
-    str_100,
-    str_20,
-    timestamp_now,
-    timestamp_update
-)
-
-if TYPE_CHECKING:
-    from app.models.employee import Employee
-    from app.models.event import Event
-    from app.models.contract import Contract
-
-
-class Client(Base):
-    """
-    Represents a customer in the CRM system.
-    """
-
-    __tablename__ = "client"
-
-    id: Mapped[pk_id]
-    full_name: Mapped[str_50]
-    email: Mapped[str_100] = mapped_column(unique=True)
-    phone: Mapped[str_20]
-    company_name: Mapped[str_50]
-
-    # New field for last business contact
-    last_contact: Mapped[timestamp_now]
-
-    # Audit timestamps
-    creation_date: Mapped[timestamp_now]
-    last_update: Mapped[timestamp_update]
-
-    # Foreign Key to the Sales Contact (Employee)
-    sales_contact_id: Mapped[int | None] = mapped_column(
-        ForeignKey("employee.id"),
-        nullable=True,
-    )
-
-    # Relationships
-    sales_contact: Mapped["Employee"] = relationship(
-        back_populates="managed_clients"
-    )
-    contracts: Mapped[list["Contract"]] = relationship(
-        back_populates="client"
-    )
-    events: Mapped[list["Event"]] = relationship(
-        back_populates="client"
-    )
-
-    def __repr__(self) -> str:
-        return (
-            f"<Client(name={self.full_name}, "
-            f"company={self.company_name})>"
-        )
-
-
-===============================================================================
-    ./app/models/contract.py
-===============================================================================
-# app/models/contract.py
-"""
-This module defines the Contract model, which stores financial agreements
-with clients, including amounts, payment status, and audit timestamps.
-"""
-
-from typing import TYPE_CHECKING
-from sqlalchemy import ForeignKey, Boolean, Numeric
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from app.models.base import (
-    Base,
-    pk_id,
-    timestamp_now,
-    timestamp_update
-)
-
-if TYPE_CHECKING:
-    from app.models.client import Client
-    from app.models.event import Event
-    from app.models.employee import Employee
-
-
-class Contract(Base):
-    """
-    Represents a financial agreement with a client.
-    """
-
-    __tablename__ = "contract"
-
-    id: Mapped[pk_id]
-    total_amount: Mapped[float] = mapped_column(Numeric(10, 2))
-    remaining_amount: Mapped[float] = mapped_column(Numeric(10, 2))
-    is_signed: Mapped[bool] = mapped_column(Boolean, default=False)
-
-    # Audit timestamps
-    creation_date: Mapped[timestamp_now]
-    last_update: Mapped[timestamp_update]
-
-    # Foreign Keys
-    client_id: Mapped[int] = mapped_column(ForeignKey("client.id"))
-    sales_contact_id: Mapped[int] = mapped_column(ForeignKey("employee.id"))
-
-    # Relationships
-    client: Mapped["Client"] = relationship(back_populates="contracts")
-    sales_contact: Mapped["Employee"] = relationship(
-        back_populates="managed_contracts"
-    )
-    event: Mapped["Event"] = relationship(back_populates="contract")
-
-    def __repr__(self) -> str:
-        return (
-            f"<Contract(id={self.id}, "
-            f"remaining={self.remaining_amount}, "
-            f"signed={self.is_signed})>"
-        )
-
-===============================================================================
-    ./app/models/department.py
-===============================================================================
-# app/models/department.py
-"""
-This module defines the Department model, which represents the different
-business units within the company and manages their relationship with employees.
-"""
-
-from typing import TYPE_CHECKING
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from app.models.base import Base, pk_id, str_50
-
-if TYPE_CHECKING:
-    from app.models.employee import Employee
-
-
-class Department(Base):
-    """
-    Represents a business unit (MANAGEMENT, SALES, or SUPPORT).
-    """
-
-    __tablename__ = "department"
-
-    id: Mapped[pk_id]
-    name: Mapped[str_50] = mapped_column(unique=True)
-
-    # Relationships
-    employees: Mapped[list["Employee"]] = relationship(
-        back_populates="department"
-    )
-
-    def __repr__(self) -> str:
-        return f"<Department(name={self.name})>"
-
-===============================================================================
-    ./app/models/employee.py
-===============================================================================
-# app/models/employee.py
-"""
-This module defines the Employee model, which stores staff member information,
-credentials, and their association with departments and managed entities
-such as clients and events.
-"""
-
-from typing import TYPE_CHECKING
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from app.models.base import Base, pk_id, str_50, str_100, str_255, str_20
-
-if TYPE_CHECKING:
-    from app.models.department import Department
-    from app.models.client import Client
-    from app.models.event import Event
-    from app.models.contract import Contract
-
-
-class Employee(Base):
-    """
-    Represents a staff member of Epic Events.
-    """
-
-    __tablename__ = "employee"
-
-    id: Mapped[pk_id]
-    full_name: Mapped[str_50]
-    email: Mapped[str_100] = mapped_column(unique=True)
-    password: Mapped[str_255]
-    employee_number: Mapped[str_20] = mapped_column(unique=True)
-
-    # Foreign Key to Department
-    department_id: Mapped[int] = mapped_column(ForeignKey("department.id"))
-
-    # Relationships
-    department: Mapped["Department"] = relationship(back_populates="employees")
-
-    # Managed entities (Sales/Support roles)
-    managed_clients: Mapped[list["Client"]] = relationship(
-        back_populates="sales_contact"
-    )
-    managed_contracts: Mapped[list["Contract"]] = relationship(
-        back_populates="sales_contact"
-    )
-    assigned_events: Mapped[list["Event"]] = relationship(
-        back_populates="support_contact"
-    )
-
-    def __repr__(self) -> str:
-        return (
-            f"<Employee(name={self.full_name}, "
-            f"department_id={self.department_id})>"
-        )
-
-===============================================================================
-    ./app/models/event.py
-===============================================================================
-# app/models/event.py
-"""
-This module defines the Event model, representing a scheduled event
-linked to a client, a contract, and potentially a support employee.
-"""
-
-from typing import TYPE_CHECKING, Optional
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from app.models.base import (
-    Base,
-    pk_id,
-    str_50,
-    text_type,
-    timestamp_now,
-    timestamp_update
-)
-
-if TYPE_CHECKING:
-    from app.models.client import Client
-    from app.models.employee import Employee
-    from app.models.contract import Contract
-
-
-class Event(Base):
-    """
-    Represents a scheduled event for a specific client and contract.
-    """
-
-    __tablename__ = "event"
-
-    id: Mapped[pk_id]
-    name: Mapped[str_50]
-    event_date_start: Mapped[timestamp_now]
-    event_date_end: Mapped[timestamp_now]
-    location: Mapped[str_50]
-    attendees: Mapped[int]
-    notes: Mapped[text_type]
-
-    # Audit timestamps
-    creation_date: Mapped[timestamp_now]
-    last_update: Mapped[timestamp_update]
-
-    # Foreign Keys
-    client_id: Mapped[int] = mapped_column(ForeignKey("client.id"))
-    contract_id: Mapped[int] = mapped_column(ForeignKey("contract.id"))
-    support_contact_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("employee.id"), nullable=True
-    )
-
-    # Relationships
-    client: Mapped["Client"] = relationship(back_populates="events")
-    contract: Mapped["Contract"] = relationship(back_populates="event")
-    support_contact: Mapped["Employee"] = relationship(
-        back_populates="assigned_events"
-    )
-
-    def __repr__(self) -> str:
-        return f"<Event(name={self.name}, start={self.event_date_start})>"
-
-===============================================================================
-    ./app/repositories/base_repository.py
-===============================================================================
-# app/repositories/base_repository.py
-"""
-This module defines the BaseRepository class using Generics.
-It provides a standardized interface for common database operations (CRUD)
-shared across all specific repositories.
-"""
-
-from typing import Generic, TypeVar, Type, Optional, List
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-import sentry_sdk
-from app.models.base import Base
-
-T = TypeVar("T", bound=Base)
-
-
-class BaseRepository(Generic[T]):
-    """
-    Base class for data access logic.
-    """
-
-    def __init__(self, session: Session, model: Type[T]):
-        self.session = session
-        self.model = model
-
-    def get_by_id(self, obj_id: int) -> Optional[T]:
-        """Fetch a single record by its primary key."""
-        return self.session.query(self.model).filter(
-            self.model.id == obj_id
-        ).first()
-
-    def get_all(self) -> List[T]:
-        """Fetch all records for this model."""
-        return self.session.query(self.model).all()
-
-    def add(self, obj: T) -> T:
-        """Add a new object and commit the transaction."""
-        try:
-            self.session.add(obj)
-            self.session.commit()
-            self.session.refresh(obj)
-            return obj
-        except IntegrityError as e:
-            # Capture database constraint violations (e.g., duplicate email)
-            self.session.rollback()
-            sentry_sdk.capture_exception(e)
-            raise e
-        except SQLAlchemyError as e:
-            # Capture any other database-related errors
-            self.session.rollback()
-            sentry_sdk.capture_exception(e)
-            raise e
-
-    def update(self, obj_id: int, update_data: dict) -> Optional[T]:
-        """Update a record and commit the transaction."""
-        obj = self.get_by_id(obj_id)
-        if obj:
-            try:
-                for key, value in update_data.items():
-                    if hasattr(obj, key):
-                        setattr(obj, key, value)
-                self.session.commit()
-                self.session.refresh(obj)
-                return obj
-            except SQLAlchemyError as e:
-                self.session.rollback()
-                sentry_sdk.capture_exception(e)
-                raise e
-        return None
-
-    def delete(self, obj: T) -> None:
-        """Remove an object and commit the transaction."""
-        try:
-            self.session.delete(obj)
-            self.session.commit()
-        except SQLAlchemyError as e:
-            self.session.rollback()
-            sentry_sdk.capture_exception(e)
-            raise e
-
-===============================================================================
-    ./app/repositories/client_repository.py
-===============================================================================
-# app/repositories/client_repository.py
-"""
-Data access layer for Client-specific operations.
-"""
-
-from typing import Optional, List
-from sqlalchemy.orm import Session
-from app.models.client import Client
-from app.repositories.base_repository import BaseRepository
-
-
-class ClientRepository(BaseRepository[Client]):
-    """
-    Repository handling Client database queries.
-    """
-
-    def __init__(self, session: Session):
-        super().__init__(session, Client)
-
-    def get_all_clients(self) -> List[Client]:
-        """
-        Fetch all clients by calling the inherited get_all method.
-        """
-        return self.get_all()
-
-    def get_by_email(self, email: str) -> Optional[Client]:
-        """
-        Fetch a client by its unique email.
-        """
-        return self.session.query(self.model).filter(
-            self.model.email == email
-        ).first()
-
-===============================================================================
-    ./app/repositories/contract_repository.py
-===============================================================================
-# app/repositories/contract_repository.py
-"""
-Data access layer for Contract-specific operations.
-"""
+SECTION 1 — PROJECT STRUCTURE
+--------------------------------------------------------------------------------
 
-from typing import List, Optional
-from sqlalchemy.orm import Session
-from app.models.contract import Contract
-from app.repositories.base_repository import BaseRepository
 
 
-class ContractRepository(BaseRepository[Contract]):
-    """
-    Repository handling Contract database queries.
-    """
+tests
+    tests/__init__.py
+    tests/conftest.py
+    tests/test_auth_controller_session_restore.py
+    tests/test_auth_utils.py
+    tests/test_business_validation.py
+    tests/test_controllers_more_more_coverage.py
+    tests/test_controllers_negative_paths.py
+    tests/test_event_messages_cli.py
+    tests/test_functional_auth.py
+    tests/test_functional_management.py
+    tests/test_functional_permissions.py
+    tests/test_functional_sales.py
+    tests/test_integration_business_repos.py
+    tests/test_integration_staff_repos.py
+    tests/test_jwt_handler.py
+    tests/test_logic_filters.py
+    tests/test_models_business.py
+    tests/test_models_staff.py
+    tests/test_permissions.py
+    tests/test_repositories.py
+    tests/test_repository_and_decorators_coverage.py
+    tests/test_robustness_edge_cases.py
 
-    def __init__(self, session: Session):
-        super().__init__(session, Contract)
+END SECTION 1
 
-    def get_all_contracts(self) -> List[Contract]:
-        """
-        Fetch all contracts by calling the inherited get_all method.
-        """
-        return self.get_all()
+SECTION 2 — CONCATENATED FILES
+--------------------------------------------------------------------------------
 
-    def get_unsigned_contracts(self) -> List[Contract]:
-        """
-        Fetch all contracts that are not yet signed.
-        """
-        return self.session.query(self.model).filter(
-            self.model.is_signed == False  # noqa: E712
-        ).all()
-
-    def get_unpaid_contracts(self) -> List[Contract]:
-        """
-        Fetch contracts where remaining amount is greater than zero.
-        """
-        return self.session.query(self.model).filter(
-            self.model.remaining_amount > 0
-        ).all()
-
-===============================================================================
-    ./app/repositories/department_repository.py
-===============================================================================
-# app/repositories/department_repository.py
-"""
-This module specializes the BaseRepository for the Department model.
-"""
-
-from typing import Optional, List
-from sqlalchemy.orm import Session
-from app.models.department import Department
-from app.repositories.base_repository import BaseRepository
-
-
-class DepartmentRepository(BaseRepository[Department]):
-    """
-    Data access layer for Department-specific operations.
-    """
-
-    def __init__(self, session: Session):
-        super().__init__(session, Department)
-
-    def get_all_departments(self) -> List[Department]:
-        """
-        Fetch all departments using the base repository method.
-        """
-        return self.get_all()
-
-    def get_by_name(self, name: str) -> Optional[Department]:
-        """
-        Fetch a department by its unique name.
-        """
-        return self.session.query(self.model).filter(
-            self.model.name == name
-        ).first()
-
-===============================================================================
-    ./app/repositories/employee_repository.py
-===============================================================================
-# app/repositories/employee_repository.py
-"""
-This module specializes the BaseRepository for the Employee model.
-It provides specific lookup methods necessary for authentication
-and staff management.
-"""
-
-from typing import Optional
-from sqlalchemy.orm import Session
-from app.models.employee import Employee
-from app.repositories.base_repository import BaseRepository
-
-
-class EmployeeRepository(BaseRepository[Employee]):
-    """
-    Data access layer for Employee-specific operations.
-    """
-
-    def __init__(self, session: Session):
-        super().__init__(session, Employee)
-
-    def get_all_employees(self):
-        """
-        Fetch all employees using the base repository method.
-        """
-        return self.get_all()
-
-    def get_by_email(self, email: str) -> Optional[Employee]:
-        """
-        Fetch an employee by their unique email address.
-        Used for authentication.
-        """
-        return self.session.query(self.model).filter(
-            self.model.email == email
-        ).first()
-
-    def get_by_employee_number(self, emp_number: str) -> Optional[Employee]:
-        """
-        Fetch an employee by their unique employee number.
-        """
-        return self.session.query(self.model).filter(
-            self.model.employee_number == emp_number
-        ).first()
-
-===============================================================================
-    ./app/repositories/event_repository.py
-===============================================================================
-# app/repositories/event_repository.py
-"""
-Data access layer for Event-specific operations.
-"""
-
-from typing import List, Optional
-from sqlalchemy.orm import Session
-from app.models.event import Event
-from app.repositories.base_repository import BaseRepository
-
-
-class EventRepository(BaseRepository[Event]):
-    """
-    Repository handling Event database queries.
-    """
-
-    def __init__(self, session: Session):
-        super().__init__(session, Event)
-
-    def get_all_events(self) -> List[Event]:
-        """
-        Fetch all events by calling the inherited get_all method.
-        """
-        return self.get_all()
-
-    def get_events_without_support(self) -> List[Event]:
-        """
-        Fetch all events that have no support contact assigned.
-        """
-        return self.session.query(self.model).filter(
-            self.model.support_contact_id == None  # noqa: E711
-        ).all()
-
-    def get_my_events(self, support_id: int) -> List[Event]:
-        """
-        Fetch events assigned to a specific support employee.
-        """
-        return self.session.query(self.model).filter(
-            self.model.support_contact_id == support_id
-        ).all()
-
-===============================================================================
-    ./app/utils/auth.py
-===============================================================================
-# app/utils/auth.py
-"""
-This module handles secure password management using the Argon2 hashing
-algorithm. It provides utilities for hashing plain text passwords and
-verifying them against stored hashes.
-"""
-
-from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError, InvalidHashError
-
-# Initialize the hasher with default secure parameters
-ph = PasswordHasher()
-
-
-def hash_password(password: str) -> str:
-    """
-    Hash a password using Argon2.
-    """
-    return ph.hash(password)
-
-
-def verify_password(hashed_password: str, plain_password: str) -> bool:
-    """
-    Verify a password against its Argon2 hash.
-    """
-    try:
-        return ph.verify(hashed_password, plain_password)
-    except (VerifyMismatchError, InvalidHashError):
-        return False
-
-===============================================================================
-    ./app/utils/decorators.py
-===============================================================================
-# app/utils/decorators.py
-"""
-Authentication decorators for controller methods.
-Ensures user_data is available via token or arguments.
-"""
-
-from functools import wraps
-from typing import Any, Callable
-
-import sentry_sdk
-
-from app.utils.jwt_handler import decode_token
-from app.utils.token_storage import get_token
-
-
-# Handles dynamic `user_data` injection from kwargs, args, controller state, or token.
-def require_auth(func: Callable) -> Callable:
-    """
-    Decorator that ensures a user is authenticated before executing a method.
-    Injects user_data into kwargs to avoid shifting positional arguments.
-    """
-
-    def is_user_data(value: Any) -> bool:
-        if not isinstance(value, dict):
-            return False
-        return "id" in value and "department" in value
-
-    @wraps(func)
-    def wrapper(self, *args, **kwargs) -> Any:
-        sentry_sdk.add_breadcrumb(
-            category="auth",
-            message=f"Checking authentication for {func.__name__}",
-            level="info",
-        )
-
-        user_data = kwargs.get("user_data")
-
-        if not user_data and args and is_user_data(args[0]):
-            user_data = args[0]
-
-        if not user_data and hasattr(self, "auth_controller"):
-            auth_ctrl = getattr(self, "auth_controller")
-            current = getattr(auth_ctrl, "current_user_data", None)
-            if current:
-                user_data = current
-
-        if not user_data:
-            token = get_token()
-            if token:
-                user_data = decode_token(token)
-
-        if not user_data:
-            sentry_sdk.add_breadcrumb(
-                category="auth",
-                message="Authentication failed: No user data found",
-                level="warning",
-            )
-            return None
-
-        if "user_data" in kwargs:
-            return func(self, *args, **kwargs)
-
-        if args and is_user_data(args[0]):
-            return func(self, *args, **kwargs)
-
-        try:
-            return func(self, *args, user_data=user_data, **kwargs)
-        except TypeError:
-            return func(self, user_data, *args, **kwargs)
-
-    return wrapper
-
-
-===============================================================================
-    ./app/utils/jwt_handler.py
-===============================================================================
-# app/utils/jwt_handler.py
-"""
-This module handles JSON Web Token (JWT) generation and validation.
-It ensures that user sessions are persistent, secure, and include
-expiration logic as required by the technical specifications.
-"""
-
-import os
-import datetime
-from typing import Optional
-import jwt
-import sentry_sdk
-
-
-# Configuration from environment variables
-SECRET_KEY = os.getenv("JWT_SECRET", "default-secret-key-to-change")
-ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-TOKEN_EXPIRATION_HOURS = 12
-
-
-def create_token(employee_id: int, department_name: str) -> str:
-    """
-    Generate a JWT token containing employee ID and department.
-    The token is set to expire in 12 hours.
-    """
-    now = datetime.datetime.now(datetime.UTC)
-    payload = {
-        "sub": str(employee_id),
-        "id": employee_id,
-        "department": department_name,
-        "iat": int(now.timestamp()),
-        "exp": int(
-            (now + datetime.timedelta(hours=TOKEN_EXPIRATION_HOURS)).timestamp()
-        ),
-    }
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-
-
-def decode_token(token: str) -> Optional[dict]:
-    """
-    Decode and validate a JWT token.
-    Returns the payload if valid, or None if expired/invalid.
-    """
-    try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except jwt.ExpiredSignatureError as e:
-        sentry_sdk.capture_exception(e)
-        return None
-    except jwt.InvalidTokenError as e:
-        # Debug print for development phase
-        print(f"DEBUG Decode Error: {e}")
-        sentry_sdk.capture_exception(e)
-        return None
-
-===============================================================================
-    ./app/utils/permissions.py
-===============================================================================
-# app/utils/permissions.py
-"""
-This module provides a centralized authorization system mapping
-specific actions to departments to determine user permissions.
-"""
-
-import sentry_sdk
-
-# Mapping of permissions per department
-PERMISSIONS = {
-    'MANAGEMENT': [
-        'read_client',
-        'update_client',
-        'read_contract',
-        'create_contract',
-        'update_contract',
-        'read_event',
-        'update_event',
-        'read_employee',
-        'create_employee',
-        'update_employee',
-        'delete_employee'
-    ],
-    'SALES': [
-        'read_client',
-        'create_client',
-        'update_client',
-        'read_contract',
-        'update_contract',
-        'read_event',
-        'create_event'
-    ],
-    'SUPPORT': [
-        'read_client',
-        'read_contract',
-        'read_event',
-        'update_event'
-    ]
-}
-
-
-def has_permission(action: str, department_name: str) -> bool:
-    """
-    Check if a specific department has the required permission.
-    """
-    allowed_actions = PERMISSIONS.get(department_name, [])
-    is_allowed = action in allowed_actions
-
-    if not is_allowed:
-        # Log unauthorized access attempts to Sentry as a warning
-        sentry_sdk.capture_message(
-            f"Access denied: Department '{department_name}' "
-            f"tried to perform action '{action}'",
-            level="warning"
-        )
-
-    return is_allowed
-
-===============================================================================
-    ./app/utils/token_storage.py
-===============================================================================
-# app/utils/token_storage.py
-"""
-This module manages the local persistence of the JWT token.
-It provides functions to save, retrieve, and delete the token from
-a local file to maintain user sessions across CLI executions.
-"""
-
-import os
-from typing import Optional
-
-TOKEN_FILE = ".token"
-
-
-def save_token(token: str) -> None:
-    """
-    Save the JWT token to a local hidden file.
-    """
-    with open(TOKEN_FILE, "w", encoding="utf-8") as f:
-        f.write(token)
-
-
-def get_token() -> Optional[str]:
-    """
-    Retrieve the JWT token from the local file if it exists.
-    """
-    if os.path.exists(TOKEN_FILE):
-        with open(TOKEN_FILE, "r", encoding="utf-8") as f:
-            return f.read().strip()
-    return None
-
-
-def delete_token() -> None:
-    """
-    Remove the local token file to log out the user.
-    """
-    if os.path.exists(TOKEN_FILE):
-        os.remove(TOKEN_FILE)
-
-===============================================================================
-    ./app/views/auth_view.py
-===============================================================================
-# app/views/auth_view.py
-"""
-View for authentication related interactions.
-Handles login inputs and success/failure messages.
-"""
-
-from app.views.base_view import BaseView
-
-
-class AuthView(BaseView):
-    """Handles login inputs."""
-
-    def ask_login_details(self) -> tuple[str, str]:
-        """Prompt user for email and password."""
-        print("\n=== Epic Events CRM - Login ===")
-        email = self.ask_input("Email")
-        password = self.ask_input("Password")
-        return email, password
-
-    def display_login_success(self):
-        """Confirm successful login."""
-        self.display_message("Login successful! Welcome.")
-
-    def display_login_failure(self):
-        """Warn about failed credentials."""
-        self.display_error("Invalid email or password.")
-
-===============================================================================
-    ./app/views/base_view.py
-===============================================================================
-# app/views/base_view.py
-"""
-Base class for all views in the application.
-Provides common display methods and input validation for CLI interaction.
-"""
-
-import re
-from datetime import datetime
-
-
-class BaseView:
-    """Provides common display methods and input validation for CLI."""
-
-    def display_message(self, message: str):
-        """Display a simple text message."""
-        print(f"\n{message}")
-
-    def display_error(self, message: str):
-        """Display an error message formatted for visibility."""
-        print(f"\n[ERROR] {message}")
-
-    def ask_input(self, prompt: str) -> str:
-        """Helper to get user input."""
-        return input(f"{prompt}: ").strip()
-
-    def validate_email(self, email: str) -> bool:
-        """Check if the email format is valid."""
-        pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
-        if re.match(pattern, email):
-            return True
-        self.display_error("Invalid email format (ex: name@domain.com).")
-        return False
-
-    def validate_amount(self, amount: str) -> bool:
-        """Check if the amount is a positive number."""
-        try:
-            val = float(amount)
-            if val >= 0:
-                return True
-            self.display_error("Amount must be a positive value.")
-        except ValueError:
-            self.display_error("Amount must be a numeric value.")
-        return False
-
-    def validate_date(self, date_str: str) -> bool:
-        """Check if the date format is valid (DD-MM-YYYY)."""
-        try:
-            datetime.strptime(date_str, "%d-%m-%Y")
-            return True
-        except ValueError:
-            self.display_error("Invalid date format. Please use DD-MM-YYYY.")
-            return False
-
-===============================================================================
-    ./app/views/client_view.py
-===============================================================================
-"""
-View for Client related interactions.
-"""
-from app.views.base_view import BaseView
-
-
-class ClientView(BaseView):
-    """Handles client display and inputs."""
-
-    def display_clients(self, clients: list):
-        """Print the list of all clients."""
-        print("\n=== Clients List ===")
-        if not clients:
-            print("No clients found.")
-            return
-        for client in clients:
-            print(
-                f"ID: {client.id} | Name: {client.full_name} | "
-                f"Email: {client.email} | Company: {client.company_name} | "
-                f"Last Contact: {client.last_contact}"
-            )
-
-    def ask_client_details(self) -> dict:
-        """Prompt user for new client information."""
-        print("\n=== Add New Client ===")
-        return {
-            "full_name": self.ask_input("Full Name"),
-            "email": self.ask_input("Email"),
-            "phone": self.ask_input("Phone"),
-            "company_name": self.ask_input("Company Name"),
-            "last_contact": self.ask_input(
-                "Last Contact Date (YYYY-MM-DD HH:MM:SS) "
-                "[Leave empty for now]"
-            )
-        }
-
-    def ask_client_update_details(self) -> dict:
-        """Prompt user for client update information."""
-        print("\n=== Update Client ===")
-        return {
-            "full_name": self.ask_input("Full Name [Leave empty to skip]"),
-            "email": self.ask_input("Email [Leave empty to skip]"),
-            "phone": self.ask_input("Phone [Leave empty to skip]"),
-            "company_name": self.ask_input("Company Name [Leave empty to skip]"),
-            "last_contact": self.ask_input(
-                "Last Contact Date (YYYY-MM-DD HH:MM:SS) "
-                "[Leave empty to skip]"
-            ),
-        }
-
-===============================================================================
-    ./app/views/contract_view.py
-===============================================================================
-"""
-View for Contract related interactions.
-"""
-from app.views.base_view import BaseView
-
-
-class ContractView(BaseView):
-    """Handles contract display and inputs."""
-
-    def display_contracts(self, contracts: list):
-        """Print the list of all contracts."""
-        print("\n=== Contracts List ===")
-        if not contracts:
-            print("No contracts found.")
-            return
-        for contract in contracts:
-            status = "Signed" if contract.is_signed else "Not Signed"
-            print(
-                f"ID: {contract.id} | Client: {contract.client.full_name} | "
-                f"Sales Contact: {contract.sales_contact.full_name} | "
-                f"Total: {contract.total_amount} | Status: {status}"
-            )
-
-    def ask_contract_details(self) -> dict:
-        """Prompt user for new contract information."""
-        print("\n=== Add New Contract ===")
-        return {
-            "client_id": self.ask_input("Client ID"),
-            "total_amount": self.ask_input("Total Amount"),
-            "remaining_amount": self.ask_input("Remaining Amount"),
-            "is_signed": self.ask_input("Is Signed (y/n) [Leave empty for n]"),
-        }
-
-    def ask_contract_update_details(self) -> dict:
-        """Prompt user for contract update information."""
-        print("\n=== Update Contract ===")
-        return {
-            "total_amount": self.ask_input("Total Amount [Leave empty to skip]"),
-            "remaining_amount": self.ask_input(
-                "Remaining Amount [Leave empty to skip]"
-            ),
-            "is_signed": self.ask_input("Is Signed (y/n) [Leave empty to skip]"),
-        }
-
-===============================================================================
-    ./app/views/employee_view.py
-===============================================================================
-# app/views/employee_view.py
-"""
-View for Employee related interactions.
-"""
-from app.views.base_view import BaseView
-
-
-class EmployeeView(BaseView):
-    """Handles employee display and inputs."""
-
-    def display_employees(self, employees: list):
-        """Print the list of all employees."""
-        print("\n=== Employees List ===")
-        if not employees:
-            print("No employees found.")
-            return
-        for emp in employees:
-            dept_name = emp.department.name if emp.department else "N/A"
-            print(
-                f"ID: {emp.id} | No: {emp.employee_number} | "
-                f"Name: {emp.full_name} | Email: {emp.email} | "
-                f"Dept: {dept_name}"
-            )
-
-    def ask_employee_details(self) -> dict:
-        """Prompt user for new employee information."""
-        print("\n=== Add New Employee ===")
-
-        full_name = self.ask_input("Full Name")
-
-        while True:
-            email = self.ask_input("Email")
-            if self.validate_email(email):
-                break
-
-        password = self.ask_input("Password")
-        employee_number = self.ask_input("Employee Number")
-        department_id = self.ask_input(
-            "Department ID (1: Sales, 2: Support, 3: Management)"
-        )
-
-        return {
-            "full_name": full_name,
-            "email": email,
-            "password": password,
-            "employee_number": employee_number,
-            "department_id": int(department_id) if department_id.isdigit() else 0
-        }
-
-    def ask_update_details(self) -> dict:
-        """Prompt user for employee updates (all fields optional)."""
-        print("\n=== Update Employee (Leave blank to keep current value) ===")
-
-        full_name = self.ask_input("New Full Name (optional)")
-        email = self.ask_input("New Email (optional)")
-        password = self.ask_input("New Password (optional)")
-        dept_id = self.ask_input("New Dept ID (optional)")
-
-        details = {}
-        if full_name:
-            details["full_name"] = full_name
-        if email:
-            details["email"] = email
-        if password:
-            details["password"] = password
-        if dept_id:
-            details["department_id"] = int(dept_id) if dept_id.isdigit() else 0
-
-        return details
-
-===============================================================================
-    ./app/views/event_view.py
-===============================================================================
-"""
-View for Event related interactions.
-"""
-from app.views.base_view import BaseView
-
-
-class EventView(BaseView):
-    """Handles event display and inputs."""
-
-    def display_events(self, events: list):
-        """Print the list of all events."""
-        print("\n=== Events List ===")
-        if not events:
-            print("No events found.")
-            return
-        for event in events:
-            support = (
-                event.support_contact.full_name
-                if event.support_contact
-                else "TBD"
-            )
-            print(
-                f"ID: {event.id} | Name: {event.name} | "
-                f"From: {event.event_date_start} To: {event.event_date_end} | "
-                f"Support: {support}"
-            )
-
-    def ask_event_details(self) -> dict:
-        """Prompt user for new event information."""
-        print("\n=== Add New Event ===")
-        return {
-            "name": self.ask_input("Event Name"),
-            "event_date_start": self.ask_input(
-                "Event Start (YYYY-MM-DD HH:MM:SS)"
-            ),
-            "event_date_end": self.ask_input(
-                "Event End (YYYY-MM-DD HH:MM:SS)"
-            ),
-            "location": self.ask_input("Location"),
-            "attendees": self.ask_input("Attendees"),
-            "notes": self.ask_input("Notes"),
-        }
-
-    def ask_event_update_details(self) -> dict:
-        """Prompt user for event update information."""
-        print("\n=== Update Event ===")
-        return {
-            "event_date_start": self.ask_input(
-                "Event Start (YYYY-MM-DD HH:MM:SS) [Leave empty to skip]"
-            ),
-            "event_date_end": self.ask_input(
-                "Event End (YYYY-MM-DD HH:MM:SS) [Leave empty to skip]"
-            ),
-            "location": self.ask_input("Location [Leave empty to skip]"),
-            "attendees": self.ask_input("Attendees [Leave empty to skip]"),
-            "notes": self.ask_input("Notes [Leave empty to skip]"),
-            "support_contact_id": self.ask_input(
-                "Support Contact ID [Leave empty to skip]"
-            ),
-        }
-
-===============================================================================
-    ./app/views/main_menu_view.py
-===============================================================================
-# app/views/main_menu_view.py
-"""
-Main menu view for the CRM application.
-Adapts displayed options based on user department.
-"""
-
-from app.views.base_view import BaseView
-
-
-class MainMenuView(BaseView):
-    """Controller view for the main menu."""
-
-    def display_menu(self, department: str):
-        """Print the main menu options according to department."""
-        print(f"\n=== Epic Events CRM - {department} Menu ===")
-        print("1. List all clients")
-        print("2. List all contracts")
-        print("3. List all events")
-
-        if department == "MANAGEMENT":
-            print("4. List all employees")
-            print("5. Create new employee")
-            print("6. Update an employee")
-            print("7. Create new contract")
-            print("8. Update a contract")
-            print("9. Assign support to an event")
-            print("10. List events without support")
-        elif department == "SALES":
-            print("20. Create new client")
-            print("21. Update a client")
-            print("22. Update a contract")
-            print("23. List unsigned contracts")
-            print("24. List unpaid contracts")
-            print("25. Create new event")
-        elif department == "SUPPORT":
-            print("30. List my events")
-            print("31. Update my events")
-
-        print("0. Logout and Exit")
-
-    def ask_menu_option(self) -> str:
-        """Ask the user for a menu option."""
-        return input("\nSelect an option: ").strip()
-
-===============================================================================
-    ./check_auth.py
-===============================================================================
-# check_auth.py
-from app.utils.auth import hash_password, verify_password
-
-password_to_test = "admin123"
-# Le hash exact que vous avez mis dans le SQL
-sql_hash = "$argon2id$v=19$m=65536,t=3,p=4$7Y5Wp8W1S6lF6z1N2q9Q5w$O7N8/v5J8J8"
-
-# 1. Test de vérification
-is_valid = verify_password(password_to_test, sql_hash)
-print(f"Match SQL hash: {is_valid}")
-
-# 2. Test de génération
-new_hash = hash_password(password_to_test)
-print(f"New hash generated: {new_hash}")
-print(f"Match new hash: {verify_password(password_to_test, new_hash)}")
-
-===============================================================================
-    ./config/config.py
-===============================================================================
-# config/config.py
-import os
-from dotenv import load_dotenv
-
-# Load variables from .env file
-load_dotenv()
-
-
-class Config:
-    """Configuration loader for environment variables."""
-    DB_USER = os.getenv("DB_USER")
-    DB_PASSWORD = os.getenv("DB_PASSWORD")
-    DB_HOST = os.getenv("DB_HOST")
-    DB_PORT = os.getenv("DB_PORT")
-    DB_NAME = os.getenv("DB_NAME")
-    SECRET_KEY = os.getenv("SECRET_KEY")
-    SENTRY_DSN = os.getenv("SENTRY_DSN")
-
-    @classmethod
-    def get_db_url(cls):
-        """Return formatted SQLAlchemy database URL."""
-        return (
-            f"mysql+mysqlconnector://{cls.DB_USER}:{cls.DB_PASSWORD}@"
-            f"{cls.DB_HOST}:{cls.DB_PORT}/{cls.DB_NAME}"
-        )
-
 ===============================================================================
-    ./init_db.py
+FILE: ./pytest.ini
+------------------------------------------------------------------------------
+META: 334 bytes | modified: 2026-02-19 13:40:15
 ===============================================================================
-# init_db.py
-from sqlalchemy import create_engine
-from app.models import Base
-from config.config import Config
 
+[pytest]
+pythonpath = .
+testpaths = tests
+python_files = test_*.py
 
-def create_tables():
-    """
-    Creates all database tables defined in the models.
-    """
-    engine = create_engine(Config.get_db_url())
+; -v: Detailed output for each test
+; --tb=short: Simplified error stack traces
+; --cov=app: Measure code coverage for the app directory
+; --cov-report=term-missing: List specific lines not covered by tests
+addopts = -v --tb=short --cov=app --cov-report=term-missing
 
-    print("Connecting to the database...")
-    try:
-        # Create all tables stored in the metadata
-        Base.metadata.create_all(engine)
-        print("Success: All tables created successfully.")
-    except Exception as e:
-        print(f"Error during table creation: {e}")
 
 
-if __name__ == "__main__":
-    create_tables()
 
 ===============================================================================
-    ./main.py
+FILE: ./tests/__init__.py
+------------------------------------------------------------------------------
+META: 0 bytes | modified: 2026-02-19 13:34:23
 ===============================================================================
-"""
-Entry point for the Epic Events CRM application.
-Manages the main loop and coordinate between controllers and views.
-"""
-
-from datetime import datetime
-
-import sentry_sdk
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from config.config import Config
-
-from app.repositories.employee_repository import EmployeeRepository
-from app.repositories.client_repository import ClientRepository
-from app.repositories.contract_repository import ContractRepository
-from app.repositories.event_repository import EventRepository
-
-from app.controllers.auth_controller import AuthController
-from app.controllers.client_controller import ClientController
-from app.controllers.contract_controller import ContractController
-from app.controllers.event_controller import EventController
-from app.controllers.employee_controller import EmployeeController
-
-from app.views.auth_view import AuthView
-from app.views.main_menu_view import MainMenuView
-from app.views.client_view import ClientView
-from app.views.contract_view import ContractView
-from app.views.event_view import EventView
-from app.views.employee_view import EmployeeView
-
-# Initialize Sentry
-sentry_sdk.init(
-    dsn=Config.SENTRY_DSN,
-    # Set the environment (default to development if not specified in Config)
-    environment=getattr(Config, "ENVIRONMENT", "development"),
-    traces_sample_rate=1.0,
-    profiles_sample_rate=1.0,
-)
-
-
-def main():
-    """Main application execution logic."""
-    try:
-        # Database Setup
-        engine = create_engine(Config.get_db_url())
-        session_factory = sessionmaker(bind=engine)
-        session = session_factory()
-
-        # Initialize Repositories
-        emp_repo = EmployeeRepository(session)
-        client_repo = ClientRepository(session)
-        contract_repo = ContractRepository(session)
-        event_repo = EventRepository(session)
-
-        # Initialize Controllers
-        auth_ctrl = AuthController(emp_repo)
-        client_ctrl = ClientController(client_repo, auth_ctrl)
-        contract_ctrl = ContractController(contract_repo, auth_ctrl)
-        event_ctrl = EventController(event_repo, auth_ctrl)
-        emp_ctrl = EmployeeController(emp_repo, auth_ctrl)
-
-        # Initialize Views
-        auth_view = AuthView()
-        menu_view = MainMenuView()
-        client_view = ClientView()
-        contract_view = ContractView()
-        event_view = EventView()
-        emp_view = EmployeeView()
-
-        # 1. Authentication Check
-        user_data = auth_ctrl.get_logged_in_user()
-        if not user_data:
-            email, password = auth_view.ask_login_details()
-            # Capture user_data directly from login()
-            user_data = auth_ctrl.login(email, password)
-            if not user_data:
-                auth_view.display_login_failure()
-                return
-
-        auth_view.display_login_success()
-
-        # 2. Application Loop
-        while True:
-
-            menu_view.display_menu(user_data["department"])
-            choice = menu_view.ask_menu_option()
-
-            if choice == "1":
-                # Pass user_data to satisfy the @require_auth decorator
-                data = client_ctrl.list_all_clients(user_data=user_data)
-                client_view.display_clients(data)
-            elif choice == "2":
-                # Pass user_data to satisfy the @require_auth decorator
-                data = contract_ctrl.list_all_contracts(user_data=user_data)
-                contract_view.display_contracts(data)
-            elif choice == "3":
-                # Pass user_data to satisfy the @require_auth decorator
-                data = event_ctrl.list_all_events(user_data=user_data)
-                event_view.display_events(data)
-            elif choice == "4":
-                if user_data["department"] != "MANAGEMENT":
-                    print("Invalid option. Please try again.")
-                    continue
-                data = emp_ctrl.list_all_employees(user_data=user_data)
-                emp_view.display_employees(data)
-            elif choice == "5":
-                if user_data["department"] != "MANAGEMENT":
-                    print("Invalid option. Please try again.")
-                    continue
-                details = emp_view.ask_employee_details()
-                emp_ctrl.create_employee(user_data=user_data, employee_data=details)
-            elif choice == "6":
-                if user_data["department"] != "MANAGEMENT":
-                    print("Invalid option. Please try again.")
-                    continue
-                emp_id = emp_view.ask_input("Enter Employee ID to update")
-                if emp_id.isdigit():
-                    updates = emp_view.ask_update_details()
-                    emp_ctrl.update_employee(
-                        user_data=user_data,
-                        emp_id=int(emp_id),
-                        update_data=updates
-                    )
-            elif choice == "7":
-                if user_data["department"] != "MANAGEMENT":
-                    print("Invalid option. Please try again.")
-                    continue
-
-                contract_data = contract_view.ask_contract_details()
-
-                client_id_raw = str(contract_data.get("client_id", "")).strip()
-                if not client_id_raw.isdigit():
-                    continue
-                client = client_ctrl.repository.get_by_id(int(client_id_raw))
-                if not client:
-                    print("Client not found.")
-                    continue
-
-                try:
-                    total_amount = float(str(contract_data["total_amount"]).strip())
-                    remaining_amount = float(
-                        str(contract_data["remaining_amount"]).strip()
-                    )
-                except (KeyError, ValueError, TypeError):
-                    continue
-
-                is_signed_raw = str(contract_data.get("is_signed", "")).strip()
-                is_signed = is_signed_raw.lower() in ["y", "yes"]
-
-                payload = {
-                    "client_id": client.id,
-                    "sales_contact_id": client.sales_contact_id,
-                    "total_amount": total_amount,
-                    "remaining_amount": remaining_amount,
-                    "is_signed": is_signed,
-                }
-                contract_ctrl.create_contract(
-                    user_data=user_data,
-                    contract_data=payload,
-                )
-            elif choice == "8":
-                if user_data["department"] != "MANAGEMENT":
-                    print("Invalid option. Please try again.")
-                    continue
-
-                contract_id = contract_view.ask_input("Enter Contract ID")
-                if not contract_id.isdigit():
-                    continue
-
-                raw = contract_view.ask_contract_update_details()
-                updates = {}
-
-                total_amount_raw = str(raw.get("total_amount", "")).strip()
-                if total_amount_raw:
-                    try:
-                        updates["total_amount"] = float(total_amount_raw)
-                    except ValueError:
-                        updates.pop("total_amount", None)
-
-                remaining_raw = str(raw.get("remaining_amount", "")).strip()
-                if remaining_raw:
-                    try:
-                        updates["remaining_amount"] = float(remaining_raw)
-                    except ValueError:
-                        updates.pop("remaining_amount", None)
 
-                is_signed_raw = str(raw.get("is_signed", "")).strip().lower()
-                if is_signed_raw in ["y", "yes"]:
-                    updates["is_signed"] = True
-                elif is_signed_raw in ["n", "no"]:
-                    updates["is_signed"] = False
 
-                if updates:
-                    contract_ctrl.update_contract(
-                        user_data=user_data,
-                        contract_id=int(contract_id),
-                        updates=updates,
-                    )
-            elif choice == "9":
-                if user_data["department"] != "MANAGEMENT":
-                    print("Invalid option. Please try again.")
-                    continue
-                event_id = event_view.ask_input("Enter Event ID")
-                support_id = event_view.ask_input("Enter Support Employee ID")
-                if not event_id.isdigit() or not support_id.isdigit():
-                    continue
-                updates = {"support_contact_id": int(support_id)}
-                event_ctrl.update_event(
-                    user_data=user_data,
-                    event_id=int(event_id),
-                    updates=updates,
-                )
-            elif choice == "10":
-                if user_data["department"] != "MANAGEMENT":
-                    print("Invalid option. Please try again.")
-                    continue
-                events = event_ctrl.list_events_without_support(
-                    user_data=user_data
-                ) or []
-                event_view.display_events(events)
-            elif choice == "20":
-                if user_data["department"] != "SALES":
-                    print("Invalid option. Please try again.")
-                    continue
-                details = client_view.ask_client_details()
-                last_contact = details.get("last_contact", "").strip()
-                if not last_contact:
-                    details.pop("last_contact", None)
-                else:
-                    try:
-                        details["last_contact"] = datetime.strptime(
-                            last_contact,
-                            "%Y-%m-%d %H:%M:%S",
-                        )
-                    except ValueError:
-                        details.pop("last_contact", None)
-                client_ctrl.create_client(user_data=user_data, client_data=details)
-            elif choice == "21":
-                if user_data["department"] != "SALES":
-                    print("Invalid option. Please try again.")
-                    continue
 
-                client_id = client_view.ask_input("Enter Client ID to update")
-                if not client_id.isdigit():
-                    continue
-
-                raw = client_view.ask_client_update_details()
-                updates = {}
-
-                full_name = str(raw.get("full_name", "")).strip()
-                email = str(raw.get("email", "")).strip()
-                phone = str(raw.get("phone", "")).strip()
-                company_name = str(raw.get("company_name", "")).strip()
-
-                if full_name:
-                    updates["full_name"] = full_name
-                if email:
-                    updates["email"] = email
-                if phone:
-                    updates["phone"] = phone
-                if company_name:
-                    updates["company_name"] = company_name
-
-                last_contact = str(raw.get("last_contact", "")).strip()
-                if last_contact:
-                    try:
-                        updates["last_contact"] = datetime.strptime(
-                            last_contact,
-                            "%Y-%m-%d %H:%M:%S",
-                        )
-                    except ValueError:
-                        updates.pop("last_contact", None)
-
-                if updates:
-                    client_ctrl.update_client(
-                        user_data=user_data,
-                        client_id=int(client_id),
-                        updates=updates,
-                    )
-            elif choice == "22":
-                if user_data["department"] != "SALES":
-                    print("Invalid option. Please try again.")
-                    continue
-
-                contract_id = contract_view.ask_input("Enter Contract ID")
-                if not contract_id.isdigit():
-                    continue
-
-                raw = contract_view.ask_contract_update_details()
-                updates = {}
-
-                total_amount_raw = str(raw.get("total_amount", "")).strip()
-                if total_amount_raw:
-                    try:
-                        updates["total_amount"] = float(total_amount_raw)
-                    except ValueError:
-                        updates.pop("total_amount", None)
-
-                remaining_raw = str(raw.get("remaining_amount", "")).strip()
-                if remaining_raw:
-                    try:
-                        updates["remaining_amount"] = float(remaining_raw)
-                    except ValueError:
-                        updates.pop("remaining_amount", None)
-
-                is_signed_raw = str(raw.get("is_signed", "")).strip().lower()
-                if is_signed_raw in ["y", "yes"]:
-                    updates["is_signed"] = True
-                elif is_signed_raw in ["n", "no"]:
-                    updates["is_signed"] = False
-
-                if updates:
-                    contract_ctrl.update_contract(
-                        user_data=user_data,
-                        contract_id=int(contract_id),
-                        updates=updates,
-                    )
-            elif choice == "23":
-                if user_data["department"] != "SALES":
-                    print("Invalid option. Please try again.")
-                    continue
-                contracts = contract_ctrl.list_unsigned_contracts(
-                    user_data=user_data
-                ) or []
-                contract_view.display_contracts(contracts)
-            elif choice == "24":
-                if user_data["department"] != "SALES":
-                    print("Invalid option. Please try again.")
-                    continue
-                contracts = contract_ctrl.list_unpaid_contracts(
-                    user_data=user_data
-                ) or []
-                contract_view.display_contracts(contracts)
-            elif choice == "25":
-                if user_data["department"] != "SALES":
-                    print("Invalid option. Please try again.")
-                    continue
-
-                contract_id = event_view.ask_input("Enter Contract ID")
-                if not contract_id.isdigit():
-                    continue
-
-                contract = contract_ctrl.repository.get_by_id(int(contract_id))
-                if not contract:
-                    print("Contract not found.")
-                    continue
-
-                raw = event_view.ask_event_details()
-
-                start_raw = str(raw.get("event_date_start", "")).strip()
-                end_raw = str(raw.get("event_date_end", "")).strip()
-                try:
-                    start_dt = datetime.strptime(start_raw, "%Y-%m-%d %H:%M:%S")
-                    end_dt = datetime.strptime(end_raw, "%Y-%m-%d %H:%M:%S")
-                except ValueError:
-                    continue
-
-                attendees_raw = str(raw.get("attendees", "")).strip()
-                try:
-                    attendees = int(attendees_raw)
-                except ValueError:
-                    continue
-
-                event_data = {
-                    "name": str(raw.get("name", "")).strip(),
-                    "event_date_start": start_dt,
-                    "event_date_end": end_dt,
-                    "location": str(raw.get("location", "")).strip(),
-                    "attendees": attendees,
-                    "notes": str(raw.get("notes", "")).strip(),
-                    "client_id": contract.client_id,
-                    "contract_id": contract.id,
-                    "support_contact_id": None,
-                }
-                event_ctrl.create_event(
-                    user_data=user_data,
-                    event_data=event_data,
-                    contract=contract,
-                )
-            elif choice == "30":
-                if user_data["department"] != "SUPPORT":
-                    print("Invalid option. Please try again.")
-                    continue
-                events = event_ctrl.list_my_events(user_data=user_data) or []
-                event_view.display_events(events)
-            elif choice == "31":
-                if user_data["department"] != "SUPPORT":
-                    print("Invalid option. Please try again.")
-                    continue
-                events = event_ctrl.list_my_events(user_data=user_data) or []
-                event_view.display_events(events)
-
-                event_id = event_view.ask_input("Enter Event ID to update")
-                if not event_id.isdigit():
-                    continue
-
-                raw = event_view.ask_event_update_details()
-                updates = {}
-
-                notes = str(raw.get("notes", "")).strip()
-                location = str(raw.get("location", "")).strip()
-                attendees_raw = str(raw.get("attendees", "")).strip()
-
-                if notes:
-                    updates["notes"] = notes
-                if location:
-                    updates["location"] = location
-                if attendees_raw:
-                    try:
-                        updates["attendees"] = int(attendees_raw)
-                    except ValueError:
-                        updates.pop("attendees", None)
-
-                if updates:
-                    event_ctrl.update_event(
-                        user_data=user_data,
-                        event_id=int(event_id),
-                        updates=updates,
-                    )
-            elif choice == "0":
-                auth_ctrl.logout()
-                print("Goodbye!")
-                break
-            else:
-                print("Invalid option. Please try again.")
-
-    except Exception as e:
-        # Catch and report any fatal application errors
-        sentry_sdk.capture_exception(e)
-        print(f"A fatal error occurred: {e}")
-        raise e
-
-
-if __name__ == "__main__":
-    main()
-
 ===============================================================================
-    ./tests/__init__.py
+FILE: ./tests/conftest.py
+------------------------------------------------------------------------------
+META: 1799 bytes | modified: 2026-02-21 19:59:53
 ===============================================================================
-
 
-===============================================================================
-    ./tests/conftest.py
-===============================================================================
 # tests/conftest.py
 """
 Pytest configuration and global fixtures.
@@ -2410,8 +152,11 @@ def db_session(db_engine):
     connection.close()
 
 ===============================================================================
-    ./tests/test_auth_controller_session_restore.py
+FILE: ./tests/test_auth_controller_session_restore.py
+------------------------------------------------------------------------------
+META: 3402 bytes | modified: 2026-02-22 04:24:19
 ===============================================================================
+
 """
 tests/test_auth_controller_session_restore.py
 
@@ -2516,8 +261,11 @@ def test_logout_clears_sentry_and_session(monkeypatch, auth_ctrl):
     assert auth_ctrl.current_user_data is None
 
 ===============================================================================
-    ./tests/test_auth_utils.py
+FILE: ./tests/test_auth_utils.py
+------------------------------------------------------------------------------
+META: 1429 bytes | modified: 2026-02-19 15:22:06
 ===============================================================================
+
 # tests/test_auth_utils.py
 """
 Unit tests for authentication utilities.
@@ -2570,8 +318,11 @@ def test_token_lifecycle():
     assert get_token() is None
 
 ===============================================================================
-    ./tests/test_business_validation.py
+FILE: ./tests/test_business_validation.py
+------------------------------------------------------------------------------
+META: 3136 bytes | modified: 2026-02-19 18:13:10
 ===============================================================================
+
 # tests/test_business_validation.py
 """
 Functional tests for business data validation and constraints.
@@ -2674,8 +425,11 @@ def test_attendees_positive(db_session, validation_setup):
     assert event.attendees < 0
 
 ===============================================================================
-    ./tests/test_controllers_more_more_coverage.py
+FILE: ./tests/test_controllers_more_more_coverage.py
+------------------------------------------------------------------------------
+META: 9290 bytes | modified: 2026-02-23 22:35:42
 ===============================================================================
+
 # tests/test_controllers_more_more_coverage.py
 """
 Extra controller tests to push coverage further (happy-path + extra branches),
@@ -2970,8 +724,11 @@ def test_event_controller_update_denied_when_not_assigned_support(
     assert "access denied" in captured.lower() or "denied" in captured.lower()
 
 ===============================================================================
-    ./tests/test_controllers_negative_paths.py
+FILE: ./tests/test_controllers_negative_paths.py
+------------------------------------------------------------------------------
+META: 10435 bytes | modified: 2026-02-22 04:41:42
 ===============================================================================
+
 # tests/test_controllers_negative_paths.py
 """
 Extra controller tests to cover negative/early-return branches:
@@ -3299,8 +1056,248 @@ def test_event_controller_update_not_found_returns_none(db_session):
     assert out is None
 
 ===============================================================================
-    ./tests/test_functional_auth.py
+FILE: ./tests/test_event_messages_cli.py
+------------------------------------------------------------------------------
+META: 7394 bytes | modified: 2026-02-24 22:35:36
 ===============================================================================
+
+# tests/test_event_messages_cli.py
+
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+import uuid
+
+import pytest
+
+from app.controllers.event_controller import EventController
+from app.models.client import Client
+from app.models.contract import Contract
+from app.models.department import Department
+from app.models.employee import Employee
+from app.models.event import Event
+from app.repositories.event_repository import EventRepository
+
+
+class DummyAuthController:
+    """Minimal auth controller to drive controller permission branches."""
+    def __init__(self, allowed: set[str]):
+        self.allowed = allowed
+        self.current_user_data: dict | None = None
+
+    def check_user_permission(self, permission: str) -> bool:
+        return permission in self.allowed
+
+
+@pytest.fixture
+def seeded_context(db_session):
+    """
+    Create a minimal dataset:
+    - departments + employees (sales/support/mgmt)
+    - one client owned by sales
+    - one signed contract + one unsigned contract
+    - one event assigned to support (for update tests)
+    """
+    sales_dept = Department(name=f"SALES_{uuid.uuid4().hex[:6]}")
+    support_dept = Department(name=f"SUPPORT_{uuid.uuid4().hex[:6]}")
+    mgmt_dept = Department(name=f"MANAGEMENT_{uuid.uuid4().hex[:6]}")
+    db_session.add_all([sales_dept, support_dept, mgmt_dept])
+    db_session.flush()
+
+    sales = Employee(
+        full_name="Sales User",
+        email=f"sales_{uuid.uuid4().hex[:6]}@t.com",
+        password="pw",
+        employee_number=f"S{uuid.uuid4().hex[:6]}",
+        department_id=sales_dept.id,
+    )
+    support = Employee(
+        full_name="Support User",
+        email=f"support_{uuid.uuid4().hex[:6]}@t.com",
+        password="pw",
+        employee_number=f"U{uuid.uuid4().hex[:6]}",
+        department_id=support_dept.id,
+    )
+    mgmt = Employee(
+        full_name="Mgmt User",
+        email=f"mgmt_{uuid.uuid4().hex[:6]}@t.com",
+        password="pw",
+        employee_number=f"M{uuid.uuid4().hex[:6]}",
+        department_id=mgmt_dept.id,
+    )
+    db_session.add_all([sales, support, mgmt])
+    db_session.flush()
+
+    client = Client(
+        full_name="Client Seed",
+        email=f"client_{uuid.uuid4().hex[:6]}@t.com",
+        phone="0102030405",
+        company_name="Corp",
+        sales_contact_id=sales.id,
+    )
+    db_session.add(client)
+    db_session.flush()
+
+    unsigned_contract = Contract(
+        total_amount=100.0,
+        remaining_amount=100.0,
+        is_signed=False,
+        client_id=client.id,
+        sales_contact_id=sales.id,
+    )
+    signed_contract = Contract(
+        total_amount=100.0,
+        remaining_amount=20.0,
+        is_signed=True,
+        client_id=client.id,
+        sales_contact_id=sales.id,
+    )
+    db_session.add_all([unsigned_contract, signed_contract])
+    db_session.flush()
+
+    event = Event(
+        name="Seed Event",
+        event_date_start=datetime.now() + timedelta(days=1),
+        event_date_end=datetime.now() + timedelta(days=2),
+        location="Paris",
+        attendees=10,
+        notes="seed",
+        client_id=client.id,
+        contract_id=signed_contract.id,
+        support_contact_id=support.id,
+    )
+    db_session.add(event)
+    db_session.commit()
+
+    return {
+        "sales": sales,
+        "support": support,
+        "mgmt": mgmt,
+        "client": client,
+        "unsigned_contract": unsigned_contract,
+        "signed_contract": signed_contract,
+        "event": event,
+    }
+
+
+def test_create_event_unsigned_contract_prints_reason(db_session, seeded_context, capfd):
+    auth = DummyAuthController(allowed={"create_event"})
+    ctrl = EventController(EventRepository(db_session), auth)
+
+    contract = seeded_context["unsigned_contract"]
+    sales = seeded_context["sales"]
+
+    out = ctrl.create_event(
+        user_data={"id": sales.id, "department": "SALES"},
+        event_data={
+            "name": "Denied Unsigned",
+            "event_date_start": datetime.now() + timedelta(days=1),
+            "event_date_end": datetime.now() + timedelta(days=2),
+            "location": "Paris",
+            "attendees": 10,
+            "notes": "n",
+            "client_id": contract.client_id,
+            "contract_id": contract.id,
+        },
+        contract=contract,
+    )
+    assert out is None
+
+    printed = capfd.readouterr().out.lower()
+    # Be tolerant to message variations
+    assert "unsigned" in printed or "not signed" in printed
+
+
+def test_create_event_not_owner_prints_reason(db_session, seeded_context, capfd):
+    auth = DummyAuthController(allowed={"create_event"})
+    ctrl = EventController(EventRepository(db_session), auth)
+
+    contract = seeded_context["signed_contract"]
+    not_owner = seeded_context["support"]  # not the sales contact
+
+    out = ctrl.create_event(
+        user_data={"id": not_owner.id, "department": "SUPPORT"},
+        event_data={
+            "name": "Denied Not Owner",
+            "event_date_start": datetime.now() + timedelta(days=1),
+            "event_date_end": datetime.now() + timedelta(days=2),
+            "location": "Paris",
+            "attendees": 10,
+            "notes": "n",
+            "client_id": contract.client_id,
+            "contract_id": contract.id,
+        },
+        contract=contract,
+    )
+    assert out is None
+
+    printed = capfd.readouterr().out.lower()
+    assert "sales contact" in printed or "not the sales" in printed
+
+
+def test_update_event_not_found_prints_message(db_session, seeded_context, capfd):
+    auth = DummyAuthController(allowed={"update_event"})
+    ctrl = EventController(EventRepository(db_session), auth)
+
+    out = ctrl.update_event(
+        user_data={"id": seeded_context["mgmt"].id, "department": "MANAGEMENT"},
+        event_id=999999,
+        updates={"notes": "x"},
+    )
+    assert out is None
+
+    printed = capfd.readouterr().out.lower()
+    assert "not found" in printed
+
+
+def test_update_event_denied_when_not_assigned_prints_message(db_session, seeded_context, capfd):
+    auth = DummyAuthController(allowed={"update_event"})
+    ctrl = EventController(EventRepository(db_session), auth)
+
+    event = seeded_context["event"]
+    not_assigned = seeded_context["sales"]  # event is assigned to support
+
+    out = ctrl.update_event(
+        user_data={"id": not_assigned.id, "department": "SALES"},
+        event_id=event.id,
+        updates={"notes": "x"},
+    )
+    assert out is None
+
+    printed = capfd.readouterr().out.lower()
+    assert "access denied" in printed
+    assert "assigned support" in printed or "support contact" in printed
+
+
+def test_get_events_without_support_filters_correctly(db_session, seeded_context):
+    repo = EventRepository(db_session)
+
+    # Existing event has support_contact_id set (seeded_context["support"].id)
+    # Add another event without support_contact_id
+    contract = seeded_context["signed_contract"]
+    e2 = Event(
+        name="No Support",
+        event_date_start=datetime.now() + timedelta(days=3),
+        event_date_end=datetime.now() + timedelta(days=4),
+        location="Lyon",
+        attendees=5,
+        notes="n",
+        client_id=contract.client_id,
+        contract_id=contract.id,
+        support_contact_id=None,
+    )
+    repo.add(e2)
+
+    no_support = repo.get_events_without_support()
+    assert any(e.name == "No Support" for e in no_support)
+    assert all(e.support_contact_id is None for e in no_support)
+
+===============================================================================
+FILE: ./tests/test_functional_auth.py
+------------------------------------------------------------------------------
+META: 1647 bytes | modified: 2026-02-21 19:13:56
+===============================================================================
+
 """
 Functional tests for authentication controller flows.
 
@@ -3355,8 +1352,11 @@ def test_auth_login_success(db_session, auth_ctrl):
     assert user["department"] == "AUTH_DEPT"
 
 ===============================================================================
-    ./tests/test_functional_management.py
+FILE: ./tests/test_functional_management.py
+------------------------------------------------------------------------------
+META: 3459 bytes | modified: 2026-02-19 18:25:44
 ===============================================================================
+
 # tests/test_functional_management.py
 """
 Functional tests for Management (T12) operations.
@@ -3460,8 +1460,11 @@ def test_list_contracts_permission(management_suite):
     assert result is not None
 
 ===============================================================================
-    ./tests/test_functional_permissions.py
+FILE: ./tests/test_functional_permissions.py
+------------------------------------------------------------------------------
+META: 1897 bytes | modified: 2026-02-19 18:07:46
 ===============================================================================
+
 # tests/test_functional_permissions.py
 """
 Functional tests for Role-Based Access Control (RBAC).
@@ -3511,8 +1514,11 @@ def test_support_restrictions(auth_controller):
     assert auth_controller.check_user_permission("create_contract") is False
 
 ===============================================================================
-    ./tests/test_functional_sales.py
+FILE: ./tests/test_functional_sales.py
+------------------------------------------------------------------------------
+META: 15246 bytes | modified: 2026-02-20 22:23:37
 ===============================================================================
+
 """
 Functional tests for Sales (T13) operations.
 
@@ -3985,8 +1991,11 @@ def test_sales_list_unpaid_contracts_filtered_by_owner(sales_suite):
     assert all(c.sales_contact_id == s1.id for c in results)
 
 ===============================================================================
-    ./tests/test_integration_business_repos.py
+FILE: ./tests/test_integration_business_repos.py
+------------------------------------------------------------------------------
+META: 3949 bytes | modified: 2026-02-19 17:37:13
 ===============================================================================
+
 # tests/test_integration_business_repos.py
 """
 Integration tests for Business Repositories (Client, Contract, Event).
@@ -4110,8 +2119,11 @@ def test_event_logic_queries(business_setup):
     assert any(c.is_signed is False for c in unsigned)
 
 ===============================================================================
-    ./tests/test_integration_staff_repos.py
+FILE: ./tests/test_integration_staff_repos.py
+------------------------------------------------------------------------------
+META: 2580 bytes | modified: 2026-02-19 17:33:03
 ===============================================================================
+
 # tests/test_integration_staff_repos.py
 """
 Integration tests for Staff Repositories (Department & Employee).
@@ -4197,8 +2209,11 @@ def test_department_lookup(staff_repos):
     assert found.id == dept.id
 
 ===============================================================================
-    ./tests/test_jwt_handler.py
+FILE: ./tests/test_jwt_handler.py
+------------------------------------------------------------------------------
+META: 1244 bytes | modified: 2026-02-19 15:05:56
 ===============================================================================
+
 # tests/test_jwt_handler.py
 """
 Unit tests for JWT handler.
@@ -4243,8 +2258,11 @@ def test_expired_token():
     assert decoded is None
 
 ===============================================================================
-    ./tests/test_logic_filters.py
+FILE: ./tests/test_logic_filters.py
+------------------------------------------------------------------------------
+META: 5323 bytes | modified: 2026-02-19 17:44:00
 ===============================================================================
+
 # tests/test_logic_filters.py
 """
 Unit tests for specialized repository filtering logic.
@@ -4399,8 +2417,11 @@ def test_filter_my_events(filter_setup):
     assert all(e.support_contact_id == support_id for e in my_events)
 
 ===============================================================================
-    ./tests/test_models_business.py
+FILE: ./tests/test_models_business.py
+------------------------------------------------------------------------------
+META: 4776 bytes | modified: 2026-02-19 17:13:27
 ===============================================================================
+
 # tests/test_models_business.py
 """
 Unit tests for Business models (Client, Contract, and Event).
@@ -4561,8 +2582,11 @@ def test_client_email_uniqueness(db_session, test_setup):
     db_session.rollback()
 
 ===============================================================================
-    ./tests/test_models_staff.py
+FILE: ./tests/test_models_staff.py
+------------------------------------------------------------------------------
+META: 2732 bytes | modified: 2026-02-19 17:08:14
 ===============================================================================
+
 # tests/test_models_staff.py
 """
 Unit tests for Staff models (Department and Employee).
@@ -4660,8 +2684,11 @@ def test_employee_unique_constraints(db_session):
 
 
 ===============================================================================
-    ./tests/test_permissions.py
+FILE: ./tests/test_permissions.py
+------------------------------------------------------------------------------
+META: 1670 bytes | modified: 2026-02-19 17:29:15
 ===============================================================================
+
 # tests/test_permissions.py
 """
 Unit tests for the authorization system.
@@ -4711,8 +2738,11 @@ def test_unknown_department_permissions():
     assert has_permission("read_client", "GHOST_DEPT") is False
 
 ===============================================================================
-    ./tests/test_repositories.py
+FILE: ./tests/test_repositories.py
+------------------------------------------------------------------------------
+META: 2650 bytes | modified: 2026-02-19 17:23:12
 ===============================================================================
+
 # tests/test_repositories.py
 """
 Unit tests for Repositories.
@@ -4805,8 +2835,11 @@ def test_repo_rollback_on_error(employee_repo, db_session):
         employee_repo.add(emp2)
 
 ===============================================================================
-    ./tests/test_repository_and_decorators_coverage.py
+FILE: ./tests/test_repository_and_decorators_coverage.py
+------------------------------------------------------------------------------
+META: 5235 bytes | modified: 2026-02-22 04:30:31
 ===============================================================================
+
 """
 tests/test_repository_and_decorators_coverage.py
 
@@ -4981,8 +3014,11 @@ def test_require_auth_does_not_break_positional_args():
     assert out["user_data"] == user
 
 ===============================================================================
-    ./tests/test_robustness_edge_cases.py
+FILE: ./tests/test_robustness_edge_cases.py
+------------------------------------------------------------------------------
+META: 8855 bytes | modified: 2026-02-21 19:14:18
 ===============================================================================
+
 """
 Integration tests for edge cases, permission denials, and coverage optimization.
 
@@ -5212,3 +3248,8 @@ def test_models_string_representation():
     assert "Event" in repr(Event(name="Party"))
     assert "Employee" in repr(Employee(full_name="T", email="t@t.com"))
 
+END SECTION 2
+
+================================================================================
+END OF REVIEW BUNDLE
+================================================================================

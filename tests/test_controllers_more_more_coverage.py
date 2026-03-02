@@ -32,8 +32,6 @@ from app.repositories.contract_repository import ContractRepository
 from app.repositories.employee_repository import EmployeeRepository
 from app.repositories.event_repository import EventRepository
 
-from app.utils.auth import verify_password
-
 
 class DummyAuthController:
     """Minimal auth controller to drive controller permission branches."""

@@ -1,4 +1,4 @@
-# 📚 OCR_P12_CRM
+# 📚 EPIC EVENTS CRM
 
 **Epic Events CRM** is a command-line Customer Relationship Management application designed to manage clients, contracts, and events for the Epic Events company.
 
@@ -262,6 +262,65 @@ python manage.py runserver
 
 ```
 
+### 🗄️ Database Setup
+
+The project provides SQL scripts in the `database/` directory to create the
+database, create the application user, and seed initial employees.
+
+#### 1) Start MySQL and connect as an admin user
+
+```bash
+mysql --version
+```
+
+Connect (adjust host/port if needed):
+
+```bash
+mysql -u root -p -h localhost -P 3307
+```
+
+#### 2) Create the database and application user
+
+From the MySQL prompt:
+
+```sql
+SOURCE database/create_database.sql;
+```
+
+Or from your shell (alternative):
+
+```bash
+mysql -u root -p -h localhost -P 3307 < database/create_database.sql
+```
+
+#### 3) Create initial departments and employees
+
+From the MySQL prompt:
+
+```sql
+USE epic_events_db;
+SOURCE database/init_db_employees.sql;
+```
+
+Or from your shell (alternative):
+
+```bash
+mysql -u root -p -h localhost -P 3307 epic_events_db \
+  < database/init_db_employees.sql
+```
+
+#### 4) Update your `.env`
+
+Ensure your `.env` values match your MySQL configuration:
+
+```env
+DB_HOST=localhost
+DB_PORT=3307
+DB_NAME=epic_events_db
+DB_USER=crm_user
+DB_PASSWORD=...
+```
+
 🌐 Access the application
 
 Open your browser and go to http://127.0.0.1:8000/
@@ -269,29 +328,49 @@ Open your browser and go to http://127.0.0.1:8000/
 ---
 
 ## 🧪 Code Quality Report (Flake8)
-![Flake8](https://img.shields.io/badge/code%20style-Flake8-blue)
-
-
-To ensure code quality and compliance with PEP8 standards, this project uses **Flake8** with HTML reporting.
-
-You can generate a detailed linting report by running the following command from the root of the project:
-
-```bash
-python -m flake8 reviews/ --format=html --htmldir=flake8_rapport
-# If python doesn't work, use python3:
-python3 -m flake8 reviews/ --format=html --htmldir=flake8_rapport
-```
-
-This will create an HTML report in the `flake8_rapport/` directory.
-You can open `flake8_rapport/index.html` in your browser to review warnings, errors, and style issues.
-
-> ⚙️ **Configuration Note**
-> Flake8 is configured via a `.flake8` file located at the root of the project.
-> It sets the maximum line length to 119 characters, excludes folders like `env/`, `__pycache__/`, and `flake8_rapport/`, and enables HTML output in the `flake8_rapport/` directory.
-
-> ✅ Tip: Make sure your virtual environment is activated before running the command.
+To ensure code quality and compliance with PEP8 standards, this project uses
+**Flake8** through the **VSCode Flake8 extension**, which provides real-time
+linting directly in the editor during development.
 
 ---
+
+## 📡 Logging (Sentry)
+
+This project uses **Sentry** to capture and report runtime exceptions.
+
+### Configuration
+
+Set the `SENTRY_DSN` variable in your `.env`:
+
+```env
+SENTRY_DSN=
+```
+
+- If `SENTRY_DSN` is empty, Sentry reporting is disabled.
+- If `SENTRY_DSN` is set, unhandled exceptions are sent to Sentry.
+
+### Verify
+
+To validate the integration, run the application and trigger an error
+intentionally (e.g., invalid command). Check your Sentry dashboard for the
+event.
+
+
+## 🧪 Tests
+
+The project uses **pytest** for automated testing.
+
+### Run the test suite with coverage
+
+```bash
+python -m pytest --cov=app --cov-report=term tests/
+```
+
+This command:
+
+- runs all tests located in the `tests/` directory
+- measures coverage on the `app` package
+- displays the coverage report directly in the terminal
 
 ## 🧰 Built With
 
